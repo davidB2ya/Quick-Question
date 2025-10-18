@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { subscribeToGame, startGame, updateCurrentQuestion, updatePlayerScore, nextRound, endGame, activateBuzzer, activateBuzzerManual, moderatorSelectPlayer, buzzerWrongAnswer, buzzerGiveUp, skipQuestion } from '@/services/gameService';
 import { generateQuestion } from '@/services/questionService';
@@ -7,6 +7,10 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Trophy, Users, Play, Check, X, StopCircle, Zap, SkipForward, User, Eye, RefreshCw } from 'lucide-react';
 import { getCategoryEmoji } from '@/lib/utils';
+import './CountdownAnimation.css'; // Add a CSS file for animations
+import { CSSTransition } from 'react-transition-group';
+import Confetti from 'react-confetti';
+
 // type import removed — not needed in this file
 
 const getMedalEmoji = (index: number) => {
@@ -16,11 +20,41 @@ const getMedalEmoji = (index: number) => {
   return '👤';
 };
 
+// Corrected CSSTransition usage
+const CountdownAnimation: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
+  const [count, setCount] = useState(3);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    timerRef.current = setInterval(() => {
+      setCount((prev) => {
+        if (prev === 1) {
+          clearInterval(timerRef.current!);
+          onComplete();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timerRef.current!);
+  }, [onComplete]);
+
+  return (
+    <div className="countdown-container">
+      <CSSTransition in={count > 0} timeout={300} classNames="fade" unmountOnExit>
+        <div className="countdown-number">{count}</div>
+      </CSSTransition>
+    </div>
+  );
+};
+
 export const ModeratorView: React.FC = () => {
   const { gameId } = useParams<{ gameId: string }>();
   const navigate = useNavigate();
   const { gameState, setGameState } = useGameStore();
   const [loading, setLoading] = useState(false);
+  const [countdownActive, setCountdownActive] = useState(false);
 
   useEffect(() => {
     if (!gameId) {
@@ -67,20 +101,26 @@ export const ModeratorView: React.FC = () => {
     // Generar pregunta con la dificultad del juego y sistema anti-repetición
     const question = await generateQuestion(randomCategory, gameState.settings.difficultyLevel, gameId);
 
-    if (gameState.settings.turnMode === 'automatic') {
-      // Modo automático: seleccionar jugador aleatorio
-      const randomPlayer = players[Math.floor(Math.random() * players.length)];
-      await updateCurrentQuestion(gameId, question, randomPlayer);
-    } else {
-      // Modo buzzer: mostrar pregunta y activar buzzer
-      await updateCurrentQuestion(gameId, question, null);
-      
-      if (gameState.settings.buzzerMode === 'moderator-select') {
-        await activateBuzzerManual(gameId);
+    setCountdownActive(true); // New state to trigger countdown
+
+    setTimeout(async () => {
+      setCountdownActive(false);
+
+      if (gameState.settings.turnMode === 'automatic') {
+        // Modo automático: seleccionar jugador aleatorio
+        const randomPlayer = players[Math.floor(Math.random() * players.length)];
+        await updateCurrentQuestion(gameId, question, randomPlayer);
       } else {
-        await activateBuzzer(gameId);
+        // Modo buzzer: mostrar pregunta y activar buzzer
+        await updateCurrentQuestion(gameId, question, null);
+        
+        if (gameState.settings.buzzerMode === 'moderator-select') {
+          await activateBuzzerManual(gameId);
+        } else {
+          await activateBuzzer(gameId);
+        }
       }
-    }
+    }, 3000); // Wait for countdown to complete
   };
 
   const handleCorrectAnswer = async () => {
@@ -527,38 +567,44 @@ export const ModeratorView: React.FC = () => {
 
         {/* Finished State */}
         {gameState.status === 'finished' && (
-          <Card className="bg-gradient-to-br from-yellow-600 to-orange-600 text-center">
-            <Trophy className="w-20 h-20 mx-auto mb-6 text-white" />
-            <h2 className="text-4xl font-bold mb-4">¡Juego Terminado!</h2>
-            <div className="text-3xl font-bold mb-6">
-              🏆 Ganador: {sortedPlayers[0]?.name}
-            </div>
-            <div className="bg-white/20 rounded-lg p-6 space-y-3">
-              <h3 className="text-2xl font-bold mb-4">Resultados Finales</h3>
-              {sortedPlayers.map((player, index) => (
-                <div
-                  key={player.id}
-                  className="flex items-center justify-between bg-white/10 rounded-lg p-4"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl">{getMedalEmoji(index)}</span>
-                    <span className="text-xl font-semibold">{player.name}</span>
+          <>
+            <Confetti width={window.innerWidth} height={window.innerHeight} />
+            <Card className="bg-gradient-to-br from-yellow-600 to-orange-600 text-center">
+              <Trophy className="w-20 h-20 mx-auto mb-6 text-white" />
+              <h2 className="text-4xl font-bold mb-4">¡Juego Terminado!</h2>
+              <div className="text-3xl font-bold mb-6">
+                🏆 Ganador: {sortedPlayers[0]?.name}
+              </div>
+              <div className="bg-white/20 rounded-lg p-6 space-y-3">
+                <h3 className="text-2xl font-bold mb-4">Resultados Finales</h3>
+                {sortedPlayers.map((player, index) => (
+                  <div
+                    key={player.id}
+                    className="flex items-center justify-between bg-white/10 rounded-lg p-4"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">{getMedalEmoji(index)}</span>
+                      <span className="text-xl font-semibold">{player.name}</span>
+                    </div>
+                    <span className="text-2xl font-bold">{player.score} pts</span>
                   </div>
-                  <span className="text-2xl font-bold">{player.score} pts</span>
-                </div>
-              ))}
-            </div>
-            <Button
-              onClick={() => navigate('/')}
-              variant="secondary"
-              size="lg"
-              className="mt-6 bg-white text-gray-800"
-            >
-              Volver al Inicio
-            </Button>
-          </Card>
+                ))}
+              </div>
+              <Button
+                onClick={() => navigate('/')}
+                variant="secondary"
+                size="lg"
+                className="mt-6 bg-white text-gray-800"
+              >
+                Volver al Inicio
+              </Button>
+            </Card>
+          </>
         )}
       </div>
+
+      {/* Integrate CountdownAnimation into the component */}
+      {countdownActive && <CountdownAnimation onComplete={() => {}} />}
     </div>
   );
 };
