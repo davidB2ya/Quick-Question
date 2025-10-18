@@ -71,6 +71,26 @@ export const joinGame = async (
   return { gameId, playerId };
 };
 
+// Verificar que existe un juego sin unirse (para espectadores)
+export const verifyGameExists = async (
+  code: string
+): Promise<{ gameId: string } | null> => {
+  const gamesRef = ref(database, 'games');
+  const snapshot = await get(gamesRef);
+
+  if (!snapshot.exists()) return null;
+
+  const games = snapshot.val();
+  const gameEntry = Object.entries(games).find(
+    ([_, game]: [string, any]) => game.code === code
+  );
+
+  if (!gameEntry) return null;
+
+  const [gameId] = gameEntry as [string, GameState];
+  return { gameId };
+};
+
 // Escuchar cambios en la partida
 export const subscribeToGame = (
   gameId: string,

@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Sparkles, Users, Gamepad2, Eye } from 'lucide-react';
-import { joinGame } from '@/services/gameService';
+import { joinGame, verifyGameExists } from '@/services/gameService';
 import { useGameStore } from '@/store/gameStore';
 
 export const HomePage: React.FC = () => {
@@ -59,9 +59,8 @@ export const HomePage: React.FC = () => {
     setError('');
 
     try {
-      // Solo necesitamos verificar que existe un juego con ese código
-      // Los espectadores no se unen oficialmente al juego, solo observan
-      const result = await joinGame(spectatorCode.toUpperCase(), 'Espectador');
+      // Solo verificamos que existe el juego, sin unirse como jugador
+      const result = await verifyGameExists(spectatorCode.toUpperCase());
       
       if (!result) {
         setError('No se encontró la partida. Verifica el código.');
@@ -69,7 +68,7 @@ export const HomePage: React.FC = () => {
         return;
       }
 
-      // Ir directamente a la vista de espectador
+      // Ir directamente a la vista de espectador sin contar como jugador
       navigate(`/game/${result.gameId}/spectator`);
     } catch (err: any) {
       setError(err.message || 'Error al acceder a la partida');
