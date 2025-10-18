@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
-import { Sparkles, Users, Gamepad2 } from 'lucide-react';
+import { Sparkles, Users, Gamepad2, Eye } from 'lucide-react';
 import { joinGame } from '@/services/gameService';
 import { useGameStore } from '@/store/gameStore';
 
@@ -11,6 +11,7 @@ export const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const [roomCode, setRoomCode] = useState('');
   const [playerName, setPlayerName] = useState('');
+  const [spectatorCode, setSpectatorCode] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -46,6 +47,34 @@ export const HomePage: React.FC = () => {
 
   const handleCreateGame = () => {
     navigate('/create');
+  };
+
+  const handleJoinAsSpectator = async () => {
+    if (!spectatorCode.trim()) {
+      setError('Por favor ingresa el código de la partida');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      // Solo necesitamos verificar que existe un juego con ese código
+      // Los espectadores no se unen oficialmente al juego, solo observan
+      const result = await joinGame(spectatorCode.toUpperCase(), 'Espectador');
+      
+      if (!result) {
+        setError('No se encontró la partida. Verifica el código.');
+        setLoading(false);
+        return;
+      }
+
+      // Ir directamente a la vista de espectador
+      navigate(`/game/${result.gameId}/spectator`);
+    } catch (err: any) {
+      setError(err.message || 'Error al acceder a la partida');
+      setLoading(false);
+    }
   };
 
   return (
@@ -102,6 +131,35 @@ export const HomePage: React.FC = () => {
             size="lg"
           >
             {loading ? 'Uniéndose...' : 'Unirse al Juego'}
+          </Button>
+        </Card>
+
+        {/* Spectator Card */}
+        <Card className="space-y-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Eye className="w-6 h-6 text-green-600" />
+            <h2 className="text-2xl font-bold text-gray-800">Ver como Espectador</h2>
+          </div>
+          <p className="text-gray-600 text-sm">
+            Observa una partida en progreso. Ideal para proyectar en pantalla grande.
+          </p>
+          
+          <Input
+            label="Código de Partida"
+            placeholder="Ej: ABC123"
+            value={spectatorCode}
+            onChange={(e) => setSpectatorCode(e.target.value.toUpperCase())}
+            maxLength={6}
+          />
+
+          <Button
+            onClick={handleJoinAsSpectator}
+            disabled={loading}
+            variant="outline"
+            className="w-full border-green-300 text-green-700 hover:bg-green-50"
+            size="lg"
+          >
+            {loading ? 'Accediendo...' : 'Ver Partida'}
           </Button>
         </Card>
 

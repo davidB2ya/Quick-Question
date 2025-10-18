@@ -29,6 +29,8 @@ export type DifficultyLevel = 'easy' | 'medium' | 'hard';
 
 export type BuzzerMode = 'player-press' | 'moderator-select';
 
+export type UserType = 'player' | 'moderator' | 'spectator';
+
 export interface GameState {
   id: string;
   code: string;

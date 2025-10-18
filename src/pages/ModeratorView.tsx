@@ -5,7 +5,7 @@ import { generateQuestion } from '@/services/questionService';
 import { useGameStore } from '@/store/gameStore';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Trophy, Users, Play, Check, X, StopCircle, Zap, SkipForward, User } from 'lucide-react';
+import { Trophy, Users, Play, Check, X, StopCircle, Zap, SkipForward, User, Eye } from 'lucide-react';
 import { getCategoryEmoji } from '@/lib/utils';
 // type import removed — not needed in this file
 
@@ -207,16 +207,34 @@ export const ModeratorView: React.FC = () => {
                 </div>
               </div>
             </div>
-            {gameState.status === 'playing' && (
+            <div className="flex items-center gap-2">
               <Button
-                onClick={handleEndGame}
-                variant="danger"
+                onClick={() => {
+                  const spectatorUrl = `${globalThis.location.origin}/game/${gameId}/spectator`;
+                  navigator.clipboard.writeText(spectatorUrl).then(() => {
+                    alert('¡Link de espectador copiado al portapapeles!');
+                  }).catch(() => {
+                    prompt('Copia este link para compartir la vista de espectador:', spectatorUrl);
+                  });
+                }}
+                variant="outline"
                 size="sm"
+                className="bg-green-600 border-green-500 text-white hover:bg-green-700"
               >
-                <StopCircle className="w-4 h-4 mr-2" />
-                Finalizar Juego
+                <Eye className="w-4 h-4 mr-2" />
+                Vista Espectador
               </Button>
-            )}
+              {gameState.status === 'playing' && (
+                <Button
+                  onClick={handleEndGame}
+                  variant="danger"
+                  size="sm"
+                >
+                  <StopCircle className="w-4 h-4 mr-2" />
+                  Finalizar Juego
+                </Button>
+              )}
+            </div>
           </div>
         </Card>
 
