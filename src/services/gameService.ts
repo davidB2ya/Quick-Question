@@ -303,3 +303,21 @@ export const moderatorSelectPlayer = async (gameId: string, playerId: string): P
     status: 'playing',
   });
 };
+
+// Saltar pregunta sin contar como ronda (para preguntas repetidas o problemáticas)
+export const skipQuestion = async (gameId: string): Promise<void> => {
+  const gameRef = ref(database, `games/${gameId}`);
+  const snapshot = await get(gameRef);
+  
+  if (snapshot.exists()) {
+    // Solo limpiar el estado actual sin avanzar la ronda
+    await update(gameRef, {
+      currentQuestion: null,
+      currentPlayerTurn: null,
+      buzzerPressed: null,
+      playersWaiting: [],
+      // Mantener el mismo round y status
+      status: 'playing',
+    });
+  }
+};

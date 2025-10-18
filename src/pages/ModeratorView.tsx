@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { subscribeToGame, startGame, updateCurrentQuestion, updatePlayerScore, nextRound, endGame, activateBuzzer, activateBuzzerManual, moderatorSelectPlayer, buzzerWrongAnswer, buzzerGiveUp } from '@/services/gameService';
+import { subscribeToGame, startGame, updateCurrentQuestion, updatePlayerScore, nextRound, endGame, activateBuzzer, activateBuzzerManual, moderatorSelectPlayer, buzzerWrongAnswer, buzzerGiveUp, skipQuestion } from '@/services/gameService';
 import { generateQuestion } from '@/services/questionService';
 import { useGameStore } from '@/store/gameStore';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Trophy, Users, Play, Check, X, StopCircle, Zap, SkipForward, User, Eye } from 'lucide-react';
+import { Trophy, Users, Play, Check, X, StopCircle, Zap, SkipForward, User, Eye, RefreshCw } from 'lucide-react';
 import { getCategoryEmoji } from '@/lib/utils';
 // type import removed — not needed in this file
 
@@ -64,8 +64,8 @@ export const ModeratorView: React.FC = () => {
     const categories = gameState.settings.categories;
     const randomCategory = categories[Math.floor(Math.random() * categories.length)];
 
-    // Generar pregunta con la dificultad del juego
-    const question = await generateQuestion(randomCategory, gameState.settings.difficultyLevel);
+    // Generar pregunta con la dificultad del juego y sistema anti-repetición
+    const question = await generateQuestion(randomCategory, gameState.settings.difficultyLevel, gameId);
 
     if (gameState.settings.turnMode === 'automatic') {
       // Modo automático: seleccionar jugador aleatorio
@@ -141,6 +141,21 @@ export const ModeratorView: React.FC = () => {
       }
     } catch (error) {
       console.error('Error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSkipQuestion = async () => {
+    if (!gameId || !gameState) return;
+
+    setLoading(true);
+    try {
+      await skipQuestion(gameId);
+      // Generar nueva pregunta inmediatamente sin avanzar ronda
+      setTimeout(() => generateNewQuestion(), 500);
+    } catch (error) {
+      console.error('Error skipping question:', error);
     } finally {
       setLoading(false);
     }
@@ -360,6 +375,16 @@ export const ModeratorView: React.FC = () => {
                   <SkipForward className="w-6 h-6 mr-2" />
                   Todos se Rinden
                 </Button>
+                <Button
+                  onClick={handleSkipQuestion}
+                  disabled={loading}
+                  className="bg-yellow-600 hover:bg-yellow-700"
+                  size="lg"
+                  title="Saltar pregunta sin contar ronda (para preguntas repetidas o problemáticas)"
+                >
+                  <RefreshCw className="w-6 h-6 mr-2" />
+                  Saltar
+                </Button>
               </div>
             </div>
           </Card>
@@ -437,6 +462,16 @@ export const ModeratorView: React.FC = () => {
                   >
                     <X className="w-6 h-6 mr-2" />
                     {gameState.settings.turnMode === 'buzzer' ? 'Incorrecta - Siguiente' : 'Respuesta Incorrecta'}
+                  </Button>
+                  <Button
+                    onClick={handleSkipQuestion}
+                    disabled={loading}
+                    className="bg-yellow-600 hover:bg-yellow-700"
+                    size="lg"
+                    title="Saltar pregunta sin contar ronda (para preguntas repetidas o problemáticas)"
+                  >
+                    <RefreshCw className="w-6 h-6 mr-2" />
+                    Saltar
                   </Button>
                   {gameState.settings.turnMode === 'buzzer' && (
                     <Button

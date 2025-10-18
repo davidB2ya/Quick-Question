@@ -1,5 +1,29 @@
 import type { Question, CategoryType, DifficultyLevel } from '@/types/game';
 
+// Sistema anti-repetición: tracking de preguntas usadas por partida
+const usedQuestions: Record<string, Set<string>> = {};
+
+// Función para limpiar preguntas usadas al terminar una partida
+export const clearUsedQuestions = (gameId: string): void => {
+  delete usedQuestions[gameId];
+};
+
+// Función para verificar si una pregunta ya fue usada
+const isQuestionUsed = (gameId: string, questionId: string): boolean => {
+  if (!usedQuestions[gameId]) {
+    usedQuestions[gameId] = new Set();
+  }
+  return usedQuestions[gameId].has(questionId);
+};
+
+// Función para marcar una pregunta como usada
+const markQuestionAsUsed = (gameId: string, questionId: string): void => {
+  if (!usedQuestions[gameId]) {
+    usedQuestions[gameId] = new Set();
+  }
+  usedQuestions[gameId].add(questionId);
+};
+
 const CATEGORY_THEMES: Record<CategoryType, string> = {
   deportes: 'deportes, atletas, equipos, competencias, con humor para jóvenes',
   musica: 'música, artistas, géneros musicales, letras, con humor para jóvenes',
@@ -10,10 +34,14 @@ const CATEGORY_THEMES: Record<CategoryType, string> = {
 };
 
 // Generador principal de preguntas - Intenta IA primero, fallback a banco estático
-export const generateQuestion = async (category: CategoryType, difficulty: DifficultyLevel = 'medium'): Promise<Question> => {
-  // Usar el generador expandido que incluye cientos de variaciones dinámicas
+export const generateQuestion = async (
+  category: CategoryType, 
+  difficulty: DifficultyLevel = 'medium',
+  gameId?: string
+): Promise<Question> => {
+  // Usar el generador expandido con sistema anti-repetición
   try {
-    return await generateExpandedQuestion(category, difficulty);
+    return await generateExpandedQuestion(category, difficulty, gameId);
   } catch (error) {
     console.warn('Expanded generation failed, using static bank:', error);
     return generateQuestionFromBank(category, difficulty);
@@ -188,6 +216,97 @@ export const generateQuestionFromBank = async (category: CategoryType, difficult
           difficulty: 'easy',
           funFact: 'Maluma significa: "Mamá ama Luz y Marlli ama"',
         },
+        {
+          category: 'musica',
+          question: '¿Cuántas teclas negras tiene un piano?',
+          answer: '36 teclas negras',
+          difficulty: 'easy',
+          funFact: 'Un piano tiene 88 teclas en total',
+        },
+        {
+          category: 'musica',
+          question: '¿Quién canta "Despacito"?',
+          answer: 'Luis Fonsi',
+          difficulty: 'easy',
+          funFact: 'Fue la canción más vista en YouTube por varios años',
+        },
+        {
+          category: 'musica',
+          question: '¿Qué instrumento toca principalmente un baterista?',
+          answer: 'Batería',
+          difficulty: 'easy',
+          funFact: 'La batería moderna se desarrolló a principios del siglo XX',
+        },
+        {
+          category: 'musica',
+          question: '¿Quién es conocido como el "Rey del Pop"?',
+          answer: 'Michael Jackson',
+          difficulty: 'easy',
+          funFact: 'Su álbum "Thriller" es el más vendido de la historia',
+        },
+        {
+          category: 'musica',
+          question: '¿Cuántas notas musicales hay?',
+          answer: '7 notas (Do, Re, Mi, Fa, Sol, La, Si)',
+          difficulty: 'easy',
+          funFact: 'Estas notas se repiten en diferentes octavas',
+        },
+        {
+          category: 'musica',
+          question: '¿Qué artista colombiana canta "Hips Don\'t Lie"?',
+          answer: 'Shakira',
+          difficulty: 'easy',
+          funFact: 'Shakira habla 6 idiomas diferentes',
+        },
+        {
+          category: 'musica',
+          question: '¿Qué género musical es típico de Jamaica?',
+          answer: 'Reggae',
+          difficulty: 'easy',
+          funFact: 'Bob Marley es el artista de reggae más famoso',
+        },
+        {
+          category: 'musica',
+          question: '¿Quién canta "Blinding Lights"?',
+          answer: 'The Weeknd',
+          difficulty: 'easy',
+          funFact: 'Fue la canción más popular de 2020',
+        },
+        {
+          category: 'musica',
+          question: '¿Qué cantante puertorriqueño es conocido como "El Conejo Malo"?',
+          answer: 'Bad Bunny',
+          difficulty: 'easy',
+          funFact: 'Es el artista más escuchado en Spotify',
+        },
+        {
+          category: 'musica',
+          question: '¿Cuántas cuerdas tiene un violín?',
+          answer: '4 cuerdas',
+          difficulty: 'easy',
+          funFact: 'El violín es el instrumento más agudo de la familia de cuerdas',
+        },
+        {
+          category: 'musica',
+          question: '¿Qué boy band cantaba "What Makes You Beautiful"?',
+          answer: 'One Direction',
+          difficulty: 'easy',
+          funFact: 'Se formaron en el programa The X Factor en 2010',
+        },
+        {
+          category: 'musica',
+          question: '¿Quién canta "Someone Like You"?',
+          answer: 'Adele',
+          difficulty: 'easy',
+          funFact: 'Adele ha ganado 15 premios Grammy',
+        },
+        {
+          category: 'musica',
+          question: '¿Qué instrumento toca principalmente en las orquestas el director?',
+          answer: 'Batuta (no toca, dirige)',
+          difficulty: 'easy',
+          funFact: 'El director coordina a todos los músicos de la orquesta',
+        }
       ],
       medium: [
         {
@@ -204,6 +323,97 @@ export const generateQuestionFromBank = async (category: CategoryType, difficult
           difficulty: 'medium',
           funFact: 'El reggaetón se originó en Puerto Rico',
         },
+        {
+          category: 'musica',
+          question: '¿Qué banda británica cantó "Bohemian Rhapsody"?',
+          answer: 'Queen',
+          difficulty: 'medium',
+          funFact: 'La canción dura 5 minutos y 55 segundos',
+        },
+        {
+          category: 'musica',
+          question: '¿En qué año murió Michael Jackson?',
+          answer: '2009',
+          difficulty: 'medium',
+          funFact: 'Murió el 25 de junio, conocido como el día más triste del pop',
+        },
+        {
+          category: 'musica',
+          question: '¿Qué instrumento tocaba Mozart principalmente?',
+          answer: 'Piano',
+          difficulty: 'medium',
+          funFact: 'Mozart compuso más de 600 obras musicales',
+        },
+        {
+          category: 'musica',
+          question: '¿Cuál es el álbum más vendido de todos los tiempos?',
+          answer: 'Thriller de Michael Jackson',
+          difficulty: 'medium',
+          funFact: 'Ha vendido más de 66 millones de copias',
+        },
+        {
+          category: 'musica',
+          question: '¿Qué banda hizo famosa la canción "Stairway to Heaven"?',
+          answer: 'Led Zeppelin',
+          difficulty: 'medium',
+          funFact: 'Es considerada una de las mejores canciones de rock de todos los tiempos',
+        },
+        {
+          category: 'musica',
+          question: '¿En qué ciudad nació el jazz?',
+          answer: 'Nueva Orleans',
+          difficulty: 'medium',
+          funFact: 'El jazz surgió a finales del siglo XIX',
+        },
+        {
+          category: 'musica',
+          question: '¿Quién compuso "La Novena Sinfonía"?',
+          answer: 'Ludwig van Beethoven',
+          difficulty: 'medium',
+          funFact: 'Beethoven estaba completamente sordo cuando la compuso',
+        },
+        {
+          category: 'musica',
+          question: '¿Qué significa MTV?',
+          answer: 'Music Television',
+          difficulty: 'medium',
+          funFact: 'MTV comenzó transmisiones el 1 de agosto de 1981',
+        },
+        {
+          category: 'musica',
+          question: '¿Cuál es el nombre artístico de Stefani Germanotta?',
+          answer: 'Lady Gaga',
+          difficulty: 'medium',
+          funFact: 'Su nombre artístico viene de la canción "Radio Ga Ga" de Queen',
+        },
+        {
+          category: 'musica',
+          question: '¿Qué rapero estadounidense se llama Marshall Mathers?',
+          answer: 'Eminem',
+          difficulty: 'medium',
+          funFact: 'Eminem es el artista que más álbumes ha vendido en la década de 2000',
+        },
+        {
+          category: 'musica',
+          question: '¿En qué festival de música famoso tocó Jimi Hendrix en 1969?',
+          answer: 'Woodstock',
+          difficulty: 'medium',
+          funFact: 'Su interpretación del himno estadounidense se volvió legendaria',
+        },
+        {
+          category: 'musica',
+          question: '¿Qué boy band surcoreana es conocida mundialmente?',
+          answer: 'BTS',
+          difficulty: 'medium',
+          funFact: 'BTS significa "Bangtan Sonyeondan" o "Bulletproof Boy Scouts"',
+        },
+        {
+          category: 'musica',
+          question: '¿Cuál es el nombre real de The Weeknd?',
+          answer: 'Abel Tesfaye',
+          difficulty: 'medium',
+          funFact: 'Eligió "The Weeknd" porque dejó la escuela un fin de semana y nunca regresó',
+        }
       ],
       hard: [
         {
@@ -490,220 +700,1088 @@ export const generateQuestionWithAI = async (
   }
 };
 
-// Generador expandido de preguntas con templates dinámicos para crear cientos de variaciones
-const questionTemplates: Record<CategoryType, Record<DifficultyLevel, Array<{
-  template: string;
-  variations: string[];
-  answers: string[];
-  funFacts: string[];
-}>>> = {
+// Banco de preguntas mejorado - elimino templates problemáticos y uso preguntas fijas
+const expandedQuestionBank: Record<CategoryType, Record<DifficultyLevel, Question[]>> = {
   deportes: {
     easy: [
       {
-        template: "¿Cuántos jugadores tiene un equipo de {} en la cancha?",
-        variations: ["fútbol", "basketball", "voleibol", "hockey", "rugby", "polo acuático", "handball"],
-        answers: ["11", "5", "6", "6 por equipo", "15", "7", "7"],
-        funFacts: ["El fútbol es el deporte más popular", "Basketball se inventó en 1891", "Voleibol se creó en 1895", "Hockey se juega sobre hielo", "Rugby se originó en Inglaterra", "Deporte olímpico desde 1900", "También llamado balonmano"]
+        id: 'dep_easy_1',
+        category: 'deportes',
+        question: '¿Cuántos jugadores tiene un equipo de fútbol en la cancha?',
+        answer: '11 jugadores',
+        difficulty: 'easy',
+        funFact: 'El fútbol es el deporte más popular del mundo'
       },
       {
-        template: "¿En qué deporte se usa {}?",
-        variations: ["una raqueta", "un bate", "patines", "una red", "guantes", "casco", "pelota ovalada"],
-        answers: ["Tenis/Ping pong", "Béisbol/Cricket", "Hockey/Patinaje", "Voleibol/Tenis", "Boxeo/Portería", "Fútbol americano", "Rugby/Fútbol americano"],
-        funFacts: ["Las raquetas varían según el deporte", "El béisbol es muy popular en USA", "El patinaje requiere equilibrio", "La red divide el campo", "Protegen las manos", "Protege la cabeza", "Forma aerodinámica"]
+        id: 'dep_easy_2',
+        category: 'deportes',
+        question: '¿Cuántos jugadores tiene un equipo de basketball?',
+        answer: '5 jugadores',
+        difficulty: 'easy',
+        funFact: 'El basketball se inventó en 1891'
       },
       {
-        template: "¿Cuánto dura un partido de {}?",
-        variations: ["fútbol", "basketball NBA", "tenis", "hockey", "rugby", "fútbol americano"],
-        answers: ["90 minutos", "48 minutos", "Variable", "60 minutos", "80 minutos", "60 minutos"],
-        funFacts: ["Más tiempo adicional", "4 cuartos de 12 min", "No hay límite de tiempo", "3 períodos de 20 min", "2 tiempos de 40 min", "4 cuartos de 15 min"]
+        id: 'dep_easy_3',
+        category: 'deportes',
+        question: '¿En qué deporte se usa una raqueta?',
+        answer: 'Tenis',
+        difficulty: 'easy',
+        funFact: 'Wimbledon es el torneo de tenis más antiguo'
+      },
+      {
+        id: 'dep_easy_4',
+        category: 'deportes',
+        question: '¿Cuál es el deporte de Messi?',
+        answer: 'Fútbol',
+        difficulty: 'easy',
+        funFact: 'Messi ha ganado 8 Balones de Oro'
+      },
+      {
+        id: 'dep_easy_5',
+        category: 'deportes',
+        question: '¿Cuánto dura un partido de fútbol?',
+        answer: '90 minutos',
+        difficulty: 'easy',
+        funFact: 'Se pueden agregar minutos de descuento'
+      },
+      {
+        id: 'dep_easy_6',
+        category: 'deportes',
+        question: '¿En qué deporte se usa un bate?',
+        answer: 'Béisbol',
+        difficulty: 'easy',
+        funFact: 'El béisbol es muy popular en Estados Unidos'
+      },
+      {
+        id: 'dep_easy_7',
+        category: 'deportes',
+        question: '¿Cuántos jugadores tiene un equipo de voleibol?',
+        answer: '6 jugadores',
+        difficulty: 'easy',
+        funFact: 'El voleibol se creó en 1895'
+      },
+      {
+        id: 'dep_easy_8',
+        category: 'deportes',
+        question: '¿Qué deporte se juega en una piscina?',
+        answer: 'Natación',
+        difficulty: 'easy',
+        funFact: 'Michael Phelps tiene 23 medallas de oro olímpicas'
+      },
+      {
+        id: 'dep_easy_9',
+        category: 'deportes',
+        question: '¿En qué deporte se usa una pelota naranja?',
+        answer: 'Basketball',
+        difficulty: 'easy',
+        funFact: 'La NBA es la liga más famosa de basketball'
+      },
+      {
+        id: 'dep_easy_10',
+        category: 'deportes',
+        question: '¿Cuántos jugadores tiene un equipo de hockey sobre hielo?',
+        answer: '6 jugadores',
+        difficulty: 'easy',
+        funFact: 'Canadá es el país más famoso en hockey'
+      },
+      {
+        id: 'dep_easy_11',
+        category: 'deportes',
+        question: '¿En qué deporte se usa un arco y flecha?',
+        answer: 'Tiro con arco',
+        difficulty: 'easy',
+        funFact: 'Es un deporte olímpico desde 1900'
+      },
+      {
+        id: 'dep_easy_12',
+        category: 'deportes',
+        question: '¿Qué deporte practica un boxeador?',
+        answer: 'Boxeo',
+        difficulty: 'easy',
+        funFact: 'Muhammad Ali es considerado el mejor de todos los tiempos'
+      },
+      {
+        id: 'dep_easy_13',
+        category: 'deportes',
+        question: '¿En qué deporte se usa una tabla sobre olas?',
+        answer: 'Surf',
+        difficulty: 'easy',
+        funFact: 'Hawái es considerado el lugar de nacimiento del surf'
+      },
+      {
+        id: 'dep_easy_14',
+        category: 'deportes',
+        question: '¿Cuántos jugadores tiene un equipo de rugby?',
+        answer: '15 jugadores',
+        difficulty: 'easy',
+        funFact: 'El rugby se originó en Inglaterra en 1823'
+      },
+      {
+        id: 'dep_easy_15',
+        category: 'deportes',
+        question: '¿En qué deporte se usa una bicicleta?',
+        answer: 'Ciclismo',
+        difficulty: 'easy',
+        funFact: 'La Tour de France es la carrera más famosa'
+      },
+      {
+        id: 'dep_easy_16',
+        category: 'deportes',
+        question: '¿Qué deporte se juega en una mesa con paletas?',
+        answer: 'Ping pong o Tenis de mesa',
+        difficulty: 'easy',
+        funFact: 'China domina este deporte a nivel mundial'
+      },
+      {
+        id: 'dep_easy_17',
+        category: 'deportes',
+        question: '¿En qué deporte los jugadores usan cascos y hombreras?',
+        answer: 'Fútbol americano',
+        difficulty: 'easy',
+        funFact: 'El Super Bowl es el evento más visto en USA'
+      },
+      {
+        id: 'dep_easy_18',
+        category: 'deportes',
+        question: '¿Cuál es el deporte de Tiger Woods?',
+        answer: 'Golf',
+        difficulty: 'easy',
+        funFact: 'Tiger Woods ha ganado 15 majors'
+      },
+      {
+        id: 'dep_easy_19',
+        category: 'deportes',
+        question: '¿En qué deporte se usa una canasta alta?',
+        answer: 'Basketball',
+        difficulty: 'easy',
+        funFact: 'La canasta está a 3.05 metros de altura'
+      },
+      {
+        id: 'dep_easy_20',
+        category: 'deportes',
+        question: '¿Qué deporte se practica en un tatami?',
+        answer: 'Judo o Karate',
+        difficulty: 'easy',
+        funFact: 'Japón es el país de origen de estas artes marciales'
       }
     ],
     medium: [
       {
-        template: "¿En qué año se creó {}?",
-        variations: ["el basketball", "el voleibol", "la FIFA", "los Juegos Olímpicos modernos", "la Copa del Mundo"],
-        answers: ["1891", "1895", "1904", "1896", "1930"],
-        funFacts: ["James Naismith lo inventó", "William Morgan lo creó", "Se fundó en París", "Comenzaron en Atenas", "Primera en Uruguay"]
+        id: 'dep_med_1',
+        category: 'deportes',
+        question: '¿En qué año se creó el basketball?',
+        answer: '1891',
+        difficulty: 'medium',
+        funFact: 'James Naismith lo inventó en Massachusetts'
       },
       {
-        template: "¿Cuántos {} hay en {}?",
-        variations: ["sets", "rounds", "cuartos", "períodos", "tiempos"],
-        answers: ["3-5 en tenis", "12 max en boxeo", "4 en basketball", "3 en hockey", "2 en fútbol"],
-        funFacts: ["Puede ser al mejor de 3 o 5", "Antes eran 15 rounds", "Cada cuarto dura 12 min", "Cada período son 20 min", "Cada tiempo son 45 min"]
+        id: 'dep_med_2',
+        category: 'deportes',
+        question: '¿Cada cuántos años se celebran los Juegos Olímpicos?',
+        answer: '4 años',
+        difficulty: 'medium',
+        funFact: 'Los primeros Juegos Olímpicos modernos fueron en 1896'
+      },
+      {
+        id: 'dep_med_3',
+        category: 'deportes',
+        question: '¿Cuántos sets se necesitan para ganar en tenis masculino de Grand Slam?',
+        answer: '3 sets',
+        difficulty: 'medium',
+        funFact: 'Es al mejor de 5 sets'
+      },
+      {
+        id: 'dep_med_4',
+        category: 'deportes',
+        question: '¿En qué deporte se usa el término "home run"?',
+        answer: 'Béisbol',
+        difficulty: 'medium',
+        funFact: 'Babe Ruth fue famoso por sus home runs'
+      },
+      {
+        id: 'dep_med_5',
+        category: 'deportes',
+        question: '¿Cuántos períodos tiene un partido de hockey?',
+        answer: '3 períodos',
+        difficulty: 'medium',
+        funFact: 'Cada período dura 20 minutos'
+      },
+      {
+        id: 'dep_med_6',
+        category: 'deportes',
+        question: '¿Cuál es la distancia de una maratón?',
+        answer: '42.195 kilómetros',
+        difficulty: 'medium',
+        funFact: 'Esta distancia se estableció en las Olimpiadas de 1908'
+      },
+      {
+        id: 'dep_med_7',
+        category: 'deportes',
+        question: '¿En qué país se originó el rugby?',
+        answer: 'Inglaterra',
+        difficulty: 'medium',
+        funFact: 'Se creó en la escuela Rugby en 1823'
+      },
+      {
+        id: 'dep_med_8',
+        category: 'deportes',
+        question: '¿Cuántos puntos vale un touchdown en fútbol americano?',
+        answer: '6 puntos',
+        difficulty: 'medium',
+        funFact: 'Después se puede intentar el punto extra'
+      },
+      {
+        id: 'dep_med_9',
+        category: 'deportes',
+        question: '¿En qué deporte James Rodríguez ganó la Bota de Oro?',
+        answer: 'Fútbol',
+        difficulty: 'medium',
+        funFact: 'Marcó 6 goles en el Mundial de Brasil 2014'
+      },
+      {
+        id: 'dep_med_10',
+        category: 'deportes',
+        question: '¿Cuántos cuartos tiene un partido de basketball en la NBA?',
+        answer: '4 cuartos',
+        difficulty: 'medium',
+        funFact: 'Cada cuarto dura 12 minutos'
+      },
+      {
+        id: 'dep_med_11',
+        category: 'deportes',
+        question: '¿En qué año se fundó la FIFA?',
+        answer: '1904',
+        difficulty: 'medium',
+        funFact: 'Se fundó en París con 7 países fundadores'
+      },
+      {
+        id: 'dep_med_12',
+        category: 'deportes',
+        question: '¿Cuánto mide una cancha de tenis en singles?',
+        answer: '23.77 metros de largo',
+        difficulty: 'medium',
+        funFact: 'En dobles es más ancha: 10.97 metros'
+      },
+      {
+        id: 'dep_med_13',
+        category: 'deportes',
+        question: '¿En qué deporte se usan los términos "strike" y "spare"?',
+        answer: 'Bowling',
+        difficulty: 'medium',
+        funFact: 'Un strike es derribar todos los pinos en el primer tiro'
+      },
+      {
+        id: 'dep_med_14',
+        category: 'deportes',
+        question: '¿Cuántas vueltas tiene una carrera de Fórmula 1 típicamente?',
+        answer: 'Entre 50-70 vueltas',
+        difficulty: 'medium',
+        funFact: 'Depende del circuito, pero debe durar máximo 2 horas'
+      },
+      {
+        id: 'dep_med_15',
+        category: 'deportes',
+        question: '¿En qué deporte se usa el término "ace"?',
+        answer: 'Tenis',
+        difficulty: 'medium',
+        funFact: 'Un ace es un saque que no puede ser devuelto'
       }
     ],
     hard: [
       {
-        template: "¿Quién tiene el récord de más {} en {}?",
-        variations: ["goles", "puntos en NBA", "Grand Slams", "medallas olímpicas", "victorias en F1"],
-        answers: ["Cristiano (890+)", "Kareem Abdul-Jabbar", "Novak Djokovic (24)", "Michael Phelps (28)", "Lewis Hamilton (103)"],
-        funFacts: ["Incluye clubes y selección", "38,387 puntos totales", "Superó a Federer y Nadal", "23 de oro, 3 plata, 2 bronce", "7 títulos mundiales también"]
+        id: 'dep_hard_1',
+        category: 'deportes',
+        question: '¿Quién tiene el récord mundial de los 100 metros planos?',
+        answer: 'Usain Bolt',
+        difficulty: 'hard',
+        funFact: 'Su récord es de 9.58 segundos establecido en 2009'
+      },
+      {
+        id: 'dep_hard_2',
+        category: 'deportes',
+        question: '¿En qué año Colombia ganó la Copa América por primera vez?',
+        answer: '2001',
+        difficulty: 'hard',
+        funFact: 'Fue en su propio país, derrotando a México en la final'
+      },
+      {
+        id: 'dep_hard_3',
+        category: 'deportes',
+        question: '¿Quién tiene más títulos de Grand Slam en tenis masculino?',
+        answer: 'Novak Djokovic',
+        difficulty: 'hard',
+        funFact: 'Djokovic tiene 24 títulos de Grand Slam'
+      },
+      {
+        id: 'dep_hard_4',
+        category: 'deportes',
+        question: '¿En qué año se fundó la FIFA?',
+        answer: '1904',
+        difficulty: 'hard',
+        funFact: 'Se fundó en París con 7 países fundadores'
       }
     ]
   },
   historia: {
     easy: [
       {
-        template: "¿En qué año {}?",
-        variations: ["llegó Colón a América", "se independizó Colombia", "terminó la Segunda Guerra", "cayó el Muro de Berlín", "llegó el hombre a la Luna"],
-        answers: ["1492", "1810", "1945", "1989", "1969"],
-        funFacts: ["12 de octubre", "20 de julio", "2 de septiembre", "9 de noviembre", "20 de julio"]
+        id: 'hist_easy_1',
+        category: 'historia',
+        question: '¿En qué año llegó Colón a América?',
+        answer: '1492',
+        difficulty: 'easy',
+        funFact: 'Fue el 12 de octubre de 1492'
       },
       {
-        template: "¿Quién fue {}?",
-        variations: ["Simón Bolívar", "Napoleón", "Cleopatra", "Gandhi", "Einstein"],
-        answers: ["El Libertador", "Emperador francés", "Reina de Egipto", "Líder de la no violencia", "Físico alemán"],
-        funFacts: ["Liberó 6 países", "Conquistó gran parte de Europa", "Última faraona", "Independencia de India", "Teoría de la relatividad"]
+        id: 'hist_easy_2',
+        category: 'historia',
+        question: '¿En qué año se independizó Colombia?',
+        answer: '1810',
+        difficulty: 'easy',
+        funFact: 'El 20 de julio de 1810'
+      },
+      {
+        id: 'hist_easy_3',
+        category: 'historia',
+        question: '¿Quién fue Simón Bolívar?',
+        answer: 'El Libertador',
+        difficulty: 'easy',
+        funFact: 'Liberó 6 países sudamericanos'
+      },
+      {
+        id: 'hist_easy_4',
+        category: 'historia',
+        question: '¿En qué año terminó la Segunda Guerra Mundial?',
+        answer: '1945',
+        difficulty: 'easy',
+        funFact: 'Terminó el 2 de septiembre de 1945'
+      },
+      {
+        id: 'hist_easy_5',
+        category: 'historia',
+        question: '¿En qué año comenzó la Primera Guerra Mundial?',
+        answer: '1914',
+        difficulty: 'easy',
+        funFact: 'Comenzó tras el asesinato del Archiduque Francisco Fernando'
+      },
+      {
+        id: 'hist_easy_6',
+        category: 'historia',
+        question: '¿Quién fue Napoleón Bonaparte?',
+        answer: 'Emperador francés',
+        difficulty: 'easy',
+        funFact: 'Conquistó gran parte de Europa'
+      },
+      {
+        id: 'hist_easy_7',
+        category: 'historia',
+        question: '¿En qué año cayó el Muro de Berlín?',
+        answer: '1989',
+        difficulty: 'easy',
+        funFact: 'Fue el 9 de noviembre de 1989'
+      },
+      {
+        id: 'hist_easy_8',
+        category: 'historia',
+        question: '¿En qué año llegó el hombre a la Luna?',
+        answer: '1969',
+        difficulty: 'easy',
+        funFact: 'Neil Armstrong fue el primero el 20 de julio'
+      },
+      {
+        id: 'hist_easy_9',
+        category: 'historia',
+        question: '¿Quién fue Cleopatra?',
+        answer: 'Reina de Egipto',
+        difficulty: 'easy',
+        funFact: 'Fue la última faraona de Egipto'
+      },
+      {
+        id: 'hist_easy_10',
+        category: 'historia',
+        question: '¿En qué siglo vivió Leonardo da Vinci?',
+        answer: 'Siglo XV-XVI',
+        difficulty: 'easy',
+        funFact: 'Fue pintor, inventor y científico del Renacimiento'
+      },
+      {
+        id: 'hist_easy_11',
+        category: 'historia',
+        question: '¿Quién descubrió América?',
+        answer: 'Cristóbal Colón',
+        difficulty: 'easy',
+        funFact: 'Era un navegante genovés'
+      },
+      {
+        id: 'hist_easy_12',
+        category: 'historia',
+        question: '¿En qué año se fundó Roma?',
+        answer: '753 a.C.',
+        difficulty: 'easy',
+        funFact: 'Según la leyenda, fue fundada por Rómulo y Remo'
+      },
+      {
+        id: 'hist_easy_13',
+        category: 'historia',
+        question: '¿Quién fue Gandhi?',
+        answer: 'Líder de la independencia de India',
+        difficulty: 'easy',
+        funFact: 'Promovió la no violencia'
+      },
+      {
+        id: 'hist_easy_14',
+        category: 'historia',
+        question: '¿En qué año comenzó la Revolución Francesa?',
+        answer: '1789',
+        difficulty: 'easy',
+        funFact: 'Tomaron la Bastilla el 14 de julio'
+      },
+      {
+        id: 'hist_easy_15',
+        category: 'historia',
+        question: '¿Quién fue el primer presidente de Estados Unidos?',
+        answer: 'George Washington',
+        difficulty: 'easy',
+        funFact: 'Rechazó ser rey y estableció la democracia'
       }
     ],
     medium: [
       {
-        template: "¿Cuándo comenzó {}?",
-        variations: ["la Primera Guerra Mundial", "la Revolución Francesa", "el Renacimiento", "la Guerra Fría"],
-        answers: ["1914", "1789", "Siglo XIV", "1947"],
-        funFacts: ["Asesinato del archiduque", "Tomaron la Bastilla", "Comenzó en Italia", "Después de la Segunda Guerra"]
+        id: 'hist_med_1',
+        category: 'historia',
+        question: '¿Cuándo comenzó la Primera Guerra Mundial?',
+        answer: '1914',
+        difficulty: 'medium',
+        funFact: 'Comenzó tras el asesinato del Archiduque Francisco Fernando'
+      },
+      {
+        id: 'hist_med_2',
+        category: 'historia',
+        question: '¿En qué año comenzó la Revolución Francesa?',
+        answer: '1789',
+        difficulty: 'medium',
+        funFact: 'Tomaron la Bastilla el 14 de julio'
       }
     ],
     hard: [
       {
-        template: "¿Cuándo terminó {}?",
-        variations: ["el Imperio Romano", "la Edad Media", "el Imperio Bizantino", "la Guerra de los Cien Años"],
-        answers: ["476 d.C.", "1453", "1453", "1453"],
-        funFacts: ["Cayó Roma Occidental", "Cayó Constantinopla", "Mismo año que la Edad Media", "Inglaterra vs Francia"]
+        id: 'hist_hard_1',
+        category: 'historia',
+        question: '¿Cuándo cayó el Imperio Romano de Occidente?',
+        answer: '476 d.C.',
+        difficulty: 'hard',
+        funFact: 'Cayó cuando Odoacro depuso a Rómulo Augusto'
       }
     ]
   },
   ciencia: {
     easy: [
       {
-        template: "¿Cuántos {} tiene {}?",
-        variations: ["planetas", "huesos", "continentes", "elementos"],
-        answers: ["8", "206 adulto", "7", "118 conocidos"],
-        funFacts: ["Plutón ya no cuenta", "Bebés nacen con más", "Incluyendo Antártida", "Tabla periódica actual"]
+        id: 'cien_easy_1',
+        category: 'ciencia',
+        question: '¿Cuántos planetas hay en nuestro sistema solar?',
+        answer: '8 planetas',
+        difficulty: 'easy',
+        funFact: 'Plutón ya no se considera planeta desde 2006'
+      },
+      {
+        id: 'cien_easy_2',
+        category: 'ciencia',
+        question: '¿Cuál es la fórmula química del agua?',
+        answer: 'H2O',
+        difficulty: 'easy',
+        funFact: 'Dos átomos de hidrógeno y uno de oxígeno'
+      },
+      {
+        id: 'cien_easy_3',
+        category: 'ciencia',
+        question: '¿Cuál es el planeta más grande del sistema solar?',
+        answer: 'Júpiter',
+        difficulty: 'easy',
+        funFact: 'Es un gigante gaseoso más grande que todos los otros planetas juntos'
+      },
+      {
+        id: 'cien_easy_4',
+        category: 'ciencia',
+        question: '¿Qué gas respiramos?',
+        answer: 'Oxígeno',
+        difficulty: 'easy',
+        funFact: 'El oxígeno representa el 21% del aire'
+      },
+      {
+        id: 'cien_easy_5',
+        category: 'ciencia',
+        question: '¿Cuántos huesos tiene el cuerpo humano adulto?',
+        answer: '206 huesos',
+        difficulty: 'easy',
+        funFact: 'Los bebés nacen con más de 270 huesos'
+      },
+      {
+        id: 'cien_easy_6',
+        category: 'ciencia',
+        question: '¿Qué órgano bombea la sangre?',
+        answer: 'El corazón',
+        difficulty: 'easy',
+        funFact: 'Late aproximadamente 100,000 veces al día'
+      },
+      {
+        id: 'cien_easy_7',
+        category: 'ciencia',
+        question: '¿Cuál es el animal más grande del mundo?',
+        answer: 'La ballena azul',
+        difficulty: 'easy',
+        funFact: 'Puede medir hasta 30 metros de largo'
+      },
+      {
+        id: 'cien_easy_8',
+        category: 'ciencia',
+        question: '¿A qué temperatura hierve el agua?',
+        answer: '100 grados Celsius',
+        difficulty: 'easy',
+        funFact: 'Al nivel del mar y a presión normal'
+      },
+      {
+        id: 'cien_easy_9',
+        category: 'ciencia',
+        question: '¿Cuál es el metal más abundante en la corteza terrestre?',
+        answer: 'Aluminio',
+        difficulty: 'easy',
+        funFact: 'Representa el 8% de la corteza terrestre'
+      },
+      {
+        id: 'cien_easy_10',
+        category: 'ciencia',
+        question: '¿Qué científico propuso la teoría de la evolución?',
+        answer: 'Charles Darwin',
+        difficulty: 'easy',
+        funFact: 'Viajó en el barco HMS Beagle'
+      },
+      {
+        id: 'cien_easy_11',
+        category: 'ciencia',
+        question: '¿Cuál es la velocidad de la luz?',
+        answer: '300,000 km/s',
+        difficulty: 'easy',
+        funFact: 'Es la velocidad máxima posible en el universo'
+      },
+      {
+        id: 'cien_easy_12',
+        category: 'ciencia',
+        question: '¿Qué inventó Alexander Graham Bell?',
+        answer: 'El teléfono',
+        difficulty: 'easy',
+        funFact: 'La primera llamada fue en 1876'
       }
     ],
     medium: [
       {
-        template: "¿Qué gas produce {}?",
-        variations: ["la fotosíntesis", "la respiración", "la combustión", "la fermentación"],
-        answers: ["Oxígeno", "Dióxido de carbono", "Dióxido de carbono", "Dióxido de carbono"],
-        funFacts: ["Las plantas lo liberan", "Los animales lo expiran", "Quema combustibles", "Proceso de levaduras"]
+        id: 'cien_med_1',
+        category: 'ciencia',
+        question: '¿Qué gas producen las plantas durante la fotosíntesis?',
+        answer: 'Oxígeno',
+        difficulty: 'medium',
+        funFact: 'Las plantas liberan oxígeno y absorben CO2'
       }
     ],
     hard: [
       {
-        template: "¿Cuál es la fórmula de {}?",
-        variations: ["la cafeína", "la aspirina", "la glucosa", "el ADN"],
-        answers: ["C8H10N4O2", "C9H8O4", "C6H12O6", "Desoxirribonucleico"],
-        funFacts: ["Estimulante natural", "Ácido acetilsalicílico", "Azúcar simple", "Contiene información genética"]
+        id: 'cien_hard_1',
+        category: 'ciencia',
+        question: '¿Cuál es la velocidad de la luz en el vacío?',
+        answer: '299,792,458 m/s',
+        difficulty: 'hard',
+        funFact: 'Es la velocidad máxima posible en el universo'
       }
     ]
   },
   geografia: {
     easy: [
       {
-        template: "¿Cuál es la capital de {}?",
-        variations: ["Francia", "Brasil", "Japón", "Australia", "Egipto", "Canadá", "Argentina"],
-        answers: ["París", "Brasília", "Tokio", "Canberra", "El Cairo", "Ottawa", "Buenos Aires"],
-        funFacts: ["Ciudad de la luz", "No es Río", "Antes era Edo", "No es Sídney", "Cerca de pirámides", "No es Toronto", "Puerto bueno"]
+        id: 'geo_easy_1',
+        category: 'geografia',
+        question: '¿Cuál es la capital de Francia?',
+        answer: 'París',
+        difficulty: 'easy',
+        funFact: 'También conocida como la Ciudad de la Luz'
+      },
+      {
+        id: 'geo_easy_2',
+        category: 'geografia',
+        question: '¿Cuál es la capital de Brasil?',
+        answer: 'Brasília',
+        difficulty: 'easy',
+        funFact: 'No es Río de Janeiro como muchos piensan'
+      },
+      {
+        id: 'geo_easy_3',
+        category: 'geografia',
+        question: '¿Cuál es la capital de Colombia?',
+        answer: 'Bogotá',
+        difficulty: 'easy',
+        funFact: 'Está ubicada a 2640 metros sobre el nivel del mar'
+      },
+      {
+        id: 'geo_easy_4',
+        category: 'geografia',
+        question: '¿En qué continente está Brasil?',
+        answer: 'América del Sur',
+        difficulty: 'easy',
+        funFact: 'Brasil ocupa casi la mitad del continente sudamericano'
+      },
+      {
+        id: 'geo_easy_5',
+        category: 'geografia',
+        question: '¿Cuál es el océano más grande?',
+        answer: 'Océano Pacífico',
+        difficulty: 'easy',
+        funFact: 'Cubre más de un tercio de la superficie terrestre'
+      },
+      {
+        id: 'geo_easy_6',
+        category: 'geografia',
+        question: '¿En qué país está la Torre Eiffel?',
+        answer: 'Francia',
+        difficulty: 'easy',
+        funFact: 'Fue construida en 1889 y mide 324 metros'
+      },
+      {
+        id: 'geo_easy_7',
+        category: 'geografia',
+        question: '¿Cuál es la capital de España?',
+        answer: 'Madrid',
+        difficulty: 'easy',
+        funFact: 'Es la capital más alta de Europa'
+      },
+      {
+        id: 'geo_easy_8',
+        category: 'geografia',
+        question: '¿En qué continente está Egipto?',
+        answer: 'África',
+        difficulty: 'easy',
+        funFact: 'También tiene una pequeña parte en Asia'
+      },
+      {
+        id: 'geo_easy_9',
+        category: 'geografia',
+        question: '¿Cuál es el país más grande del mundo?',
+        answer: 'Rusia',
+        difficulty: 'easy',
+        funFact: 'Abarca 11 zonas horarias diferentes'
+      },
+      {
+        id: 'geo_easy_10',
+        category: 'geografia',
+        question: '¿Cuál es la montaña más alta del mundo?',
+        answer: 'Monte Everest',
+        difficulty: 'easy',
+        funFact: 'Mide 8849 metros de altura'
+      },
+      {
+        id: 'geo_easy_11',
+        category: 'geografia',
+        question: '¿Cuál es la capital de México?',
+        answer: 'Ciudad de México',
+        difficulty: 'easy',
+        funFact: 'Es una de las ciudades más pobladas del mundo'
+      },
+      {
+        id: 'geo_easy_12',
+        category: 'geografia',
+        question: '¿En qué país está Machu Picchu?',
+        answer: 'Perú',
+        difficulty: 'easy',
+        funFact: 'Fue construida por los incas en el siglo XV'
+      },
+      {
+        id: 'geo_easy_13',
+        category: 'geografia',
+        question: '¿Cuál es la capital de Argentina?',
+        answer: 'Buenos Aires',
+        difficulty: 'easy',
+        funFact: 'Es conocida como el París de América del Sur'
+      },
+      {
+        id: 'geo_easy_14',
+        category: 'geografia',
+        question: '¿Cuál es el río más largo del mundo?',
+        answer: 'Río Amazonas',
+        difficulty: 'easy',
+        funFact: 'Tiene más de 6400 kilómetros de longitud'
+      },
+      {
+        id: 'geo_easy_15',
+        category: 'geografia',
+        question: '¿En qué océano están las islas Maldivas?',
+        answer: 'Océano Índico',
+        difficulty: 'easy',
+        funFact: 'Están formadas por 1192 islas coralinas'
       }
     ],
     medium: [
       {
-        template: "¿Qué río pasa por {}?",
-        variations: ["París", "Londres", "Egipto", "Nueva York", "Roma"],
-        answers: ["Sena", "Támesis", "Nilo", "Hudson", "Tíber"],
-        funFacts: ["Divide la ciudad", "Big Ben está cerca", "El más largo del mundo", "Desemboca en el Atlántico", "Ciudad eterna"]
+        id: 'geo_med_1',
+        category: 'geografia',
+        question: '¿Qué río pasa por París?',
+        answer: 'Río Sena',
+        difficulty: 'medium',
+        funFact: 'Divide la ciudad y tiene muchos puentes famosos'
+      },
+      {
+        id: 'geo_med_2',
+        category: 'geografia',
+        question: '¿Cuál es la capital de Australia?',
+        answer: 'Canberra',
+        difficulty: 'medium',
+        funFact: 'No es Sydney ni Melbourne como muchos creen'
+      },
+      {
+        id: 'geo_med_3',
+        category: 'geografia',
+        question: '¿Qué estrecho separa Europa de África?',
+        answer: 'Estrecho de Gibraltar',
+        difficulty: 'medium',
+        funFact: 'Tiene solo 14 kilómetros de ancho en su punto más estrecho'
+      },
+      {
+        id: 'geo_med_4',
+        category: 'geografia',
+        question: '¿En qué cordillera está el Aconcagua?',
+        answer: 'Cordillera de los Andes',
+        difficulty: 'medium',
+        funFact: 'Es la montaña más alta de América con 6962 metros'
+      },
+      {
+        id: 'geo_med_5',
+        category: 'geografia',
+        question: '¿Cuál es el país más pequeño del mundo?',
+        answer: 'Ciudad del Vaticano',
+        difficulty: 'medium',
+        funFact: 'Tiene solo 0.17 millas cuadradas de superficie'
+      },
+      {
+        id: 'geo_med_6',
+        category: 'geografia',
+        question: '¿Qué canal conecta el Atlántico y el Pacífico?',
+        answer: 'Canal de Panamá',
+        difficulty: 'medium',
+        funFact: 'Fue inaugurado en 1914 y mide 82 kilómetros'
+      },
+      {
+        id: 'geo_med_7',
+        category: 'geografia',
+        question: '¿En qué país está la región de Transilvania?',
+        answer: 'Rumania',
+        difficulty: 'medium',
+        funFact: 'Es famosa por las leyendas de vampiros y Drácula'
+      },
+      {
+        id: 'geo_med_8',
+        category: 'geografia',
+        question: '¿Cuál es el lago más profundo del mundo?',
+        answer: 'Lago Baikal',
+        difficulty: 'medium',
+        funFact: 'Contiene el 20% del agua dulce no congelada del mundo'
+      },
+      {
+        id: 'geo_med_9',
+        category: 'geografia',
+        question: '¿Qué islas pertenecen a Ecuador?',
+        answer: 'Islas Galápagos',
+        difficulty: 'medium',
+        funFact: 'Inspiraron la teoría de la evolución de Darwin'
+      },
+      {
+        id: 'geo_med_10',
+        category: 'geografia',
+        question: '¿Cuál es la capital de Canadá?',
+        answer: 'Ottawa',
+        difficulty: 'medium',
+        funFact: 'No es Toronto ni Montreal como muchos piensan'
+      },
+      {
+        id: 'geo_med_11',
+        category: 'geografia',
+        question: '¿En qué mar está la isla de Creta?',
+        answer: 'Mar Mediterráneo',
+        difficulty: 'medium',
+        funFact: 'Es la isla más grande de Grecia'
+      },
+      {
+        id: 'geo_med_12',
+        category: 'geografia',
+        question: '¿Qué cordillera separa Europa de Asia?',
+        answer: 'Montes Urales',
+        difficulty: 'medium',
+        funFact: 'Se extiende por más de 2500 kilómetros'
+      },
+      {
+        id: 'geo_med_13',
+        category: 'geografia',
+        question: '¿Cuál es el volcán más alto del mundo?',
+        answer: 'Nevado Ojos del Salado',
+        difficulty: 'medium',
+        funFact: 'Está ubicado entre Chile y Argentina, a 6893 metros'
+      },
+      {
+        id: 'geo_med_14',
+        category: 'geografia',
+        question: '¿En qué país están las cataratas Victoria?',
+        answer: 'Entre Zambia y Zimbabwe',
+        difficulty: 'medium',
+        funFact: 'Son llamadas "el humo que truena" por los locales'
+      },
+      {
+        id: 'geo_med_15',
+        category: 'geografia',
+        question: '¿Cuál es la capital de Sudáfrica?',
+        answer: 'Pretoria (ejecutiva)',
+        difficulty: 'medium',
+        funFact: 'Sudáfrica tiene tres capitales: Pretoria, Ciudad del Cabo y Bloemfontein'
       }
     ],
     hard: [
       {
-        template: "¿Cuál es el {} más {} del mundo?",
-        variations: ["desierto|grande", "lago|profundo", "río|largo", "monte|alto"],
-        answers: ["Sahara", "Baikal", "Nilo", "Everest"],
-        funFacts: ["9 millones km²", "1,642m profundo", "6,650 km largo", "8,849m alto"]
+        id: 'geo_hard_1',
+        category: 'geografia',
+        question: '¿Cuál es el desierto más grande del mundo?',
+        answer: 'Sahara',
+        difficulty: 'hard',
+        funFact: 'Cubre aproximadamente 9 millones de km²'
       }
     ]
   },
   entretenimiento: {
     easy: [
       {
-        template: "¿Quién creó {}?",
-        variations: ["Mickey Mouse", "Harry Potter", "Pokemon", "Los Simpson", "Spider-Man"],
-        answers: ["Walt Disney", "J.K. Rowling", "Satoshi Tajiri", "Matt Groening", "Stan Lee"],
-        funFacts: ["1928 debut", "Escrito en cafeterías", "Inspirado en coleccionismo", "Comenzó como sketches", "Marvel Comics"]
+        id: 'ent_easy_1',
+        category: 'entretenimiento',
+        question: '¿Quién creó Mickey Mouse?',
+        answer: 'Walt Disney',
+        difficulty: 'easy',
+        funFact: 'Mickey Mouse debutó en 1928'
+      },
+      {
+        id: 'ent_easy_2',
+        category: 'entretenimiento',
+        question: '¿Quién escribió Harry Potter?',
+        answer: 'J.K. Rowling',
+        difficulty: 'easy',
+        funFact: 'Escribió gran parte del primer libro en cafeterías'
+      },
+      {
+        id: 'ent_easy_3',
+        category: 'entretenimiento',
+        question: '¿Cómo se llama el perro de Mickey Mouse?',
+        answer: 'Pluto',
+        difficulty: 'easy',
+        funFact: 'Pluto apareció por primera vez en 1930'
+      },
+      {
+        id: 'ent_easy_4',
+        category: 'entretenimiento',
+        question: '¿En qué película aparece el personaje Buzz Lightyear?',
+        answer: 'Toy Story',
+        difficulty: 'easy',
+        funFact: 'Fue la primera película completamente animada por computadora'
+      },
+      {
+        id: 'ent_easy_5',
+        category: 'entretenimiento',
+        question: '¿Cuál es el nombre real de Superman?',
+        answer: 'Clark Kent',
+        difficulty: 'easy',
+        funFact: 'Superman fue creado en 1938'
+      },
+      {
+        id: 'ent_easy_6',
+        category: 'entretenimiento',
+        question: '¿Qué color es Bob Esponja?',
+        answer: 'Amarillo',
+        difficulty: 'easy',
+        funFact: 'Bob Esponja vive en una piña bajo el mar'
+      },
+      {
+        id: 'ent_easy_7',
+        category: 'entretenimiento',
+        question: '¿Cómo se llama la princesa de la película Frozen?',
+        answer: 'Elsa',
+        difficulty: 'easy',
+        funFact: 'La canción "Let It Go" ganó un Oscar'
+      },
+      {
+        id: 'ent_easy_8',
+        category: 'entretenimiento',
+        question: '¿En qué ciudad vive Batman?',
+        answer: 'Gotham City',
+        difficulty: 'easy',
+        funFact: 'Gotham City está inspirada en Nueva York'
+      },
+      {
+        id: 'ent_easy_9',
+        category: 'entretenimiento',
+        question: '¿Cuántos dedos tiene Mickey Mouse en cada mano?',
+        answer: 'Cuatro',
+        difficulty: 'easy',
+        funFact: 'Disney decidió que cuatro dedos se veían mejor en animación'
+      },
+      {
+        id: 'ent_easy_10',
+        category: 'entretenimiento',
+        question: '¿Cómo se llama el pez de Nemo?',
+        answer: 'Pez payaso',
+        difficulty: 'easy',
+        funFact: 'Los peces payaso pueden cambiar de sexo'
+      },
+      {
+        id: 'ent_easy_11',
+        category: 'entretenimiento',
+        question: '¿En qué película aparece el personaje Shrek?',
+        answer: 'Shrek',
+        difficulty: 'easy',
+        funFact: 'Shrek fue la primera película en ganar el Oscar a Mejor Película Animada'
+      },
+      {
+        id: 'ent_easy_12',
+        category: 'entretenimiento',
+        question: '¿Cuál es el nombre del león en El Rey León?',
+        answer: 'Simba',
+        difficulty: 'easy',
+        funFact: 'Simba significa "león" en swahili'
+      },
+      {
+        id: 'ent_easy_13',
+        category: 'entretenimiento',
+        question: '¿Qué videojuego tiene un fontanero como protagonista?',
+        answer: 'Super Mario Bros',
+        difficulty: 'easy',
+        funFact: 'Mario originalmente se llamaba Jumpman'
+      },
+      {
+        id: 'ent_easy_14',
+        category: 'entretenimiento',
+        question: '¿Cómo se llama la casa de los Simpson?',
+        answer: 'Springfield',
+        difficulty: 'easy',
+        funFact: 'Los Simpson llevan más de 30 años al aire'
+      },
+      {
+        id: 'ent_easy_15',
+        category: 'entretenimiento',
+        question: '¿En qué red social se publican fotos y videos cortos?',
+        answer: 'TikTok',
+        difficulty: 'easy',
+        funFact: 'TikTok originalmente se llamaba Musical.ly'
       }
     ],
     medium: [
       {
-        template: "¿En qué película se dice '{}'?",
-        variations: ["Yo soy tu padre", "Que la fuerza te acompañe", "Hasta el infinito y más allá", "Hakuna Matata"],
-        answers: ["Star Wars", "Star Wars", "Toy Story", "El Rey León"],
-        funFacts: ["Darth Vader lo dice", "Saludo Jedi", "Buzz Lightyear", "Significa sin preocupaciones"]
+        id: 'ent_med_1',
+        category: 'entretenimiento',
+        question: '¿En qué película se dice "Que la fuerza te acompañe"?',
+        answer: 'Star Wars',
+        difficulty: 'medium',
+        funFact: 'Es el saludo tradicional de los Jedi'
       }
     ],
     hard: [
       {
-        template: "¿Quién dirigió {}?",
-        variations: ["Psycho", "2001 Odisea", "Pulp Fiction", "El Padrino"],
-        answers: ["Alfred Hitchcock", "Stanley Kubrick", "Quentin Tarantino", "Francis Ford Coppola"],
-        funFacts: ["Maestro del suspenso", "Perfeccionista obsesivo", "Diálogos únicos", "Trilogía legendaria"]
+        id: 'ent_hard_1',
+        category: 'entretenimiento',
+        question: '¿Quién dirigió la película Psycho?',
+        answer: 'Alfred Hitchcock',
+        difficulty: 'hard',
+        funFact: 'Es considerado el maestro del suspenso'
       }
     ]
   },
   musica: {
     easy: [
       {
-        template: "¿Quién canta {}?",
-        variations: ["Despacito", "Shape of You", "Bohemian Rhapsody", "Billie Jean"],
-        answers: ["Luis Fonsi", "Ed Sheeran", "Queen", "Michael Jackson"],
-        funFacts: ["Éxito mundial 2017", "Canción más escuchada", "6 minutos de duración", "Rey del pop"]
+        id: 'mus_easy_1',
+        category: 'musica',
+        question: '¿Quién canta "Despacito"?',
+        answer: 'Luis Fonsi',
+        difficulty: 'easy',
+        funFact: 'Fue un éxito mundial en 2017'
+      },
+      {
+        id: 'mus_easy_2',
+        category: 'musica',
+        question: '¿Quién cantaba "Billie Jean"?',
+        answer: 'Michael Jackson',
+        difficulty: 'easy',
+        funFact: 'Michael Jackson era conocido como el Rey del Pop'
       }
     ],
     medium: [
       {
-        template: "¿De qué país es {}?",
-        variations: ["Shakira", "Coldplay", "ABBA", "U2"],
-        answers: ["Colombia", "Reino Unido", "Suecia", "Irlanda"],
-        funFacts: ["Barranquilla", "Londres", "Estocolmo", "Dublín"]
+        id: 'mus_med_1',
+        category: 'musica',
+        question: '¿De qué país es Shakira?',
+        answer: 'Colombia',
+        difficulty: 'medium',
+        funFact: 'Es de Barranquilla, Colombia'
       }
     ],
     hard: [
       {
-        template: "¿En qué año se formó {}?",
-        variations: ["The Beatles", "Pink Floyd", "Led Zeppelin", "Queen"],
-        answers: ["1960", "1965", "1968", "1970"],
-        funFacts: ["Liverpool", "Londres", "Londres", "Londres con Freddie"]
+        id: 'mus_hard_1',
+        category: 'musica',
+        question: '¿En qué año se formó la banda Queen?',
+        answer: '1970',
+        difficulty: 'hard',
+        funFact: 'Freddie Mercury era su carismático vocalista'
       }
     ]
   }
 };
 
-// Función que combina banco estático + templates dinámicos para generar cientos de preguntas
-const generateExpandedQuestion = async (category: CategoryType, difficulty: DifficultyLevel): Promise<Question> => {
-  const allQuestions: Question[] = [];
+// Función mejorada con sistema anti-repetición
+const generateExpandedQuestion = async (
+  category: CategoryType, 
+  difficulty: DifficultyLevel, 
+  gameId?: string
+): Promise<Question> => {
+  const categoryQuestions = expandedQuestionBank[category]?.[difficulty] || [];
   
-  // Generar preguntas dinámicas desde templates (esto crea cientos de variaciones)
-  const templates = questionTemplates[category]?.[difficulty] || [];
-  for (const [templateIndex, template] of templates.entries()) {
-    for (const [variationIndex, variation] of template.variations.entries()) {
-      const question = template.template.split('{}').join(variation);
-      allQuestions.push({
-        id: `expanded_${category}_${difficulty}_${templateIndex}_${variationIndex}_${Date.now()}`,
-        category,
-        question,
-        answer: template.answers[variationIndex] || template.answers[0],
-        difficulty,
-        funFact: template.funFacts[variationIndex] || template.funFacts[0]
-      });
-    }
-  }
-  
-  if (allQuestions.length === 0) {
-    // Fallback al banco original si no hay templates
+  if (categoryQuestions.length === 0) {
+    // Fallback al banco original si no hay preguntas en el expandido
     return await generateQuestionFromBank(category, difficulty);
   }
   
-  const randomIndex = Math.floor(Math.random() * allQuestions.length);
-  return allQuestions[randomIndex];
+  // Si no hay gameId, comportamiento normal (sin tracking)
+  if (!gameId) {
+    const randomIndex = Math.floor(Math.random() * categoryQuestions.length);
+    const selectedQuestion = categoryQuestions[randomIndex];
+    return {
+      ...selectedQuestion,
+      id: `${selectedQuestion.id}_${Date.now()}_${Math.random().toString(36).substring(7)}`
+    };
+  }
+  
+  // Sistema anti-repetición: filtrar preguntas ya usadas
+  const availableQuestions = categoryQuestions.filter(q => !isQuestionUsed(gameId, q.id));
+  
+  // Si todas las preguntas de esta categoría/dificultad fueron usadas, resetear y usar todas
+  if (availableQuestions.length === 0) {
+    console.log(`Todas las preguntas de ${category}/${difficulty} fueron usadas. Reseteando...`);
+    for (const q of categoryQuestions) {
+      if (usedQuestions[gameId]) {
+        usedQuestions[gameId].delete(q.id);
+      }
+    }
+    return generateExpandedQuestion(category, difficulty, gameId);
+  }
+  
+  // Seleccionar pregunta no usada
+  const randomIndex = Math.floor(Math.random() * availableQuestions.length);
+  const selectedQuestion = availableQuestions[randomIndex];
+  
+  // Marcar como usada
+  markQuestionAsUsed(gameId, selectedQuestion.id);
+  
+  return {
+    ...selectedQuestion,
+    id: `${selectedQuestion.id}_${Date.now()}_${Math.random().toString(36).substring(7)}`
+  };
 };
