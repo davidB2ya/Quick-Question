@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { Settings, ArrowLeft, Timer, Zap } from 'lucide-react';
+import { Settings, ArrowLeft, Timer, Zap, User, Gamepad2, Brain, Star, Award } from 'lucide-react';
 import { createGame } from '@/services/gameService';
 import { useGameStore } from '@/store/gameStore';
-import type { CategoryType, TurnMode } from '@/types/game';
+import type { CategoryType, TurnMode, DifficultyLevel, BuzzerMode } from '@/types/game';
 
 const CATEGORIES: { value: CategoryType; label: string; emoji: string }[] = [
   { value: 'deportes', label: 'Deportes', emoji: '⚽' },
@@ -28,6 +28,8 @@ export const CreateGamePage: React.FC = () => {
     'historia',
   ]);
   const [turnMode, setTurnMode] = useState<TurnMode>('automatic');
+  const [difficultyLevel, setDifficultyLevel] = useState<DifficultyLevel>('medium');
+  const [buzzerMode, setBuzzerMode] = useState<BuzzerMode>('player-press');
   const [loading, setLoading] = useState(false);
 
   const handleCategoryToggle = (category: CategoryType) => {
@@ -50,6 +52,8 @@ export const CreateGamePage: React.FC = () => {
         roundsPerGame,
         categories: selectedCategories,
         turnMode,
+        difficultyLevel,
+        buzzerMode: turnMode === 'buzzer' ? buzzerMode : undefined,
       });
 
       setGameId(gameId);
@@ -122,6 +126,57 @@ export const CreateGamePage: React.FC = () => {
             </div>
           </div>
 
+          {/* Difficulty Level */}
+          <div>
+            <label className="block text-lg font-semibold text-gray-700 mb-3">
+              Nivel de Dificultad
+            </label>
+            <div className="grid grid-cols-3 gap-3">
+              <button
+                onClick={() => setDifficultyLevel('easy')}
+                className={`py-3 px-4 rounded-lg font-semibold transition-all flex flex-col items-center gap-2 ${
+                  difficultyLevel === 'easy'
+                    ? 'bg-green-600 text-white shadow-lg'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <Star className="w-5 h-5" />
+                <div className="text-center">
+                  <div className="font-bold">Fácil</div>
+                  <div className="text-xs opacity-80">Preguntas básicas</div>
+                </div>
+              </button>
+              <button
+                onClick={() => setDifficultyLevel('medium')}
+                className={`py-3 px-4 rounded-lg font-semibold transition-all flex flex-col items-center gap-2 ${
+                  difficultyLevel === 'medium'
+                    ? 'bg-yellow-600 text-white shadow-lg'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <Brain className="w-5 h-5" />
+                <div className="text-center">
+                  <div className="font-bold">Medio</div>
+                  <div className="text-xs opacity-80">Conocimiento general</div>
+                </div>
+              </button>
+              <button
+                onClick={() => setDifficultyLevel('hard')}
+                className={`py-3 px-4 rounded-lg font-semibold transition-all flex flex-col items-center gap-2 ${
+                  difficultyLevel === 'hard'
+                    ? 'bg-red-600 text-white shadow-lg'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <Award className="w-5 h-5" />
+                <div className="text-center">
+                  <div className="font-bold">Difícil</div>
+                  <div className="text-xs opacity-80">Para expertos</div>
+                </div>
+              </button>
+            </div>
+          </div>
+
           {/* Turn Mode */}
           <div>
             <label className="block text-lg font-semibold text-gray-700 mb-3">
@@ -156,11 +211,54 @@ export const CreateGamePage: React.FC = () => {
                 <div className="text-left">
                   <div className="font-bold">Modo Buzzer</div>
                   <div className="text-sm opacity-80">
-                    Los jugadores presionan un botón para responder
+                    Sistema de respuesta rápida con botones
                   </div>
                 </div>
               </button>
             </div>
+
+            {/* Buzzer Mode Options */}
+            {turnMode === 'buzzer' && (
+              <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <div className="text-sm font-semibold text-blue-800 mb-3">
+                  Tipo de Buzzer:
+                </div>
+                <div className="grid grid-cols-1 gap-2">
+                  <button
+                    onClick={() => setBuzzerMode('player-press')}
+                    className={`py-3 px-4 rounded-lg font-semibold transition-all flex items-center gap-3 text-sm ${
+                      buzzerMode === 'player-press'
+                        ? 'bg-blue-600 text-white shadow-lg'
+                        : 'bg-white text-blue-700 hover:bg-blue-100 border border-blue-300'
+                    }`}
+                  >
+                    <Gamepad2 className="w-5 h-5" />
+                    <div className="text-left">
+                      <div className="font-bold">Jugadores Presionan</div>
+                      <div className="text-xs opacity-80">
+                        Los jugadores presionan el botón en pantalla
+                      </div>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => setBuzzerMode('moderator-select')}
+                    className={`py-3 px-4 rounded-lg font-semibold transition-all flex items-center gap-3 text-sm ${
+                      buzzerMode === 'moderator-select'
+                        ? 'bg-blue-600 text-white shadow-lg'
+                        : 'bg-white text-blue-700 hover:bg-blue-100 border border-blue-300'
+                    }`}
+                  >
+                    <User className="w-5 h-5" />
+                    <div className="text-left">
+                      <div className="font-bold">Moderador Elige</div>
+                      <div className="text-xs opacity-80">
+                        El moderador selecciona quién presionó primero
+                      </div>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Categories */}

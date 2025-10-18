@@ -263,3 +263,23 @@ export const buzzerGiveUp = async (gameId: string): Promise<void> => {
     }
   }
 };
+
+// Activar modo buzzer para selección manual del moderador
+export const activateBuzzerManual = async (gameId: string): Promise<void> => {
+  await update(ref(database, `games/${gameId}`), {
+    status: 'waiting-for-buzzer',
+    buzzerPressed: null,
+    playersWaiting: [],
+    // Marca especial para indicar que es modo manual
+    buzzerManualMode: true,
+  });
+};
+
+// Moderador selecciona manualmente quién presionó el buzzer
+export const moderatorSelectPlayer = async (gameId: string, playerId: string): Promise<void> => {
+  await update(ref(database, `games/${gameId}`), {
+    buzzerPressed: playerId,
+    currentPlayerTurn: playerId,
+    status: 'playing',
+  });
+};

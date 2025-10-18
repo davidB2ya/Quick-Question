@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { subscribeToGame, startGame, updateCurrentQuestion, updatePlayerScore, nextRound, endGame, activateBuzzer, buzzerWrongAnswer, buzzerGiveUp } from '@/services/gameService';
+import { subscribeToGame, startGame, updateCurrentQuestion, updatePlayerScore, nextRound, endGame, activateBuzzer, activateBuzzerManual, moderatorSelectPlayer, buzzerWrongAnswer, buzzerGiveUp } from '@/services/gameService';
 import { generateQuestion } from '@/services/questionService';
 import { useGameStore } from '@/store/gameStore';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Trophy, Users, Play, Check, X, StopCircle, Zap, SkipForward } from 'lucide-react';
+import { Trophy, Users, Play, Check, X, StopCircle, Zap, SkipForward, User } from 'lucide-react';
 import { getCategoryEmoji } from '@/lib/utils';
 // type import removed — not needed in this file
 
@@ -64,8 +64,8 @@ export const ModeratorView: React.FC = () => {
     const categories = gameState.settings.categories;
     const randomCategory = categories[Math.floor(Math.random() * categories.length)];
 
-    // Generar pregunta
-    const question = await generateQuestion(randomCategory);
+    // Generar pregunta con la dificultad del juego
+    const question = await generateQuestion(randomCategory, gameState.settings.difficultyLevel);
 
     if (gameState.settings.turnMode === 'automatic') {
       // Modo automático: seleccionar jugador aleatorio
@@ -74,7 +74,12 @@ export const ModeratorView: React.FC = () => {
     } else {
       // Modo buzzer: mostrar pregunta y activar buzzer
       await updateCurrentQuestion(gameId, question, null);
-      await activateBuzzer(gameId);
+      
+      if (gameState.settings.buzzerMode === 'moderator-select') {
+        await activateBuzzerManual(gameId);
+      } else {
+        await activateBuzzer(gameId);
+      }
     }
   };
 
@@ -136,6 +141,19 @@ export const ModeratorView: React.FC = () => {
       }
     } catch (error) {
       console.error('Error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleModeratorSelectPlayer = async (playerId: string) => {
+    if (!gameId) return;
+
+    setLoading(true);
+    try {
+      await moderatorSelectPlayer(gameId, playerId);
+    } catch (error) {
+      console.error('Error selecting player:', error);
     } finally {
       setLoading(false);
     }
@@ -257,7 +275,7 @@ export const ModeratorView: React.FC = () => {
                 <div className="text-right">
                   <div className="bg-yellow-500 text-yellow-900 px-4 py-2 rounded-full font-bold animate-pulse">
                     <Zap className="w-4 h-4 inline mr-2" />
-                    Esperando Buzzer
+                    {gameState.settings.buzzerMode === 'moderator-select' ? 'Selecciona Jugador' : 'Esperando Buzzer'}
                   </div>
                 </div>
               </div>
@@ -266,14 +284,44 @@ export const ModeratorView: React.FC = () => {
                 <h3 className="text-3xl font-bold mb-4">
                   {gameState.currentQuestion.question}
                 </h3>
-                <div className="bg-yellow-500/20 border-2 border-yellow-500 rounded-lg p-4 mb-4">
-                  <div className="text-sm font-semibold text-yellow-300 mb-1">
-                    ¡Los jugadores pueden presionar el buzzer!
+                
+                {gameState.settings.buzzerMode === 'moderator-select' ? (
+                  <div className="space-y-4">
+                    <div className="bg-blue-500/20 border-2 border-blue-500 rounded-lg p-4 mb-4">
+                      <div className="text-sm font-semibold text-blue-300 mb-1">
+                        Selecciona quién presionó el buzzer primero:
+                      </div>
+                      <div className="text-blue-200">
+                        Haz clic en el jugador que levantó la mano o presionó su botón físico
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-3">
+                      {players.map((player) => (
+                        <Button
+                          key={player.id}
+                          onClick={() => handleModeratorSelectPlayer(player.id)}
+                          disabled={loading}
+                          className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3"
+                          size="lg"
+                        >
+                          <User className="w-5 h-5 mr-2" />
+                          {player.name}
+                        </Button>
+                      ))}
+                    </div>
                   </div>
-                  <div className="text-yellow-200">
-                    El primer jugador en presionar podrá responder
+                ) : (
+                  <div className="bg-yellow-500/20 border-2 border-yellow-500 rounded-lg p-4 mb-4">
+                    <div className="text-sm font-semibold text-yellow-300 mb-1">
+                      ¡Los jugadores pueden presionar el buzzer!
+                    </div>
+                    <div className="text-yellow-200">
+                      El primer jugador en presionar podrá responder
+                    </div>
                   </div>
-                </div>
+                )}
+                
                 <div className="bg-green-500/20 border-2 border-green-500 rounded-lg p-4">
                   <div className="text-sm font-semibold text-green-300 mb-1">
                     RESPUESTA CORRECTA:

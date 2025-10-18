@@ -25,6 +25,10 @@ export type CategoryType =
 
 export type TurnMode = 'automatic' | 'buzzer';
 
+export type DifficultyLevel = 'easy' | 'medium' | 'hard';
+
+export type BuzzerMode = 'player-press' | 'moderator-select';
+
 export interface GameState {
   id: string;
   code: string;
@@ -45,6 +49,8 @@ export interface GameSettings {
   roundsPerGame: number;
   categories: CategoryType[];
   turnMode: TurnMode;
+  difficultyLevel: DifficultyLevel;
+  buzzerMode?: BuzzerMode; // Solo relevante cuando turnMode es 'buzzer'
   timePerQuestion?: number;
 }
 

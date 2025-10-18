@@ -116,7 +116,7 @@ export const PlayerView: React.FC = () => {
                 </div>
                 <div className="bg-yellow-500 text-white px-4 py-2 rounded-full font-bold animate-pulse">
                   <Zap className="w-4 h-4 inline mr-2" />
-                  ¡Buzzer Activo!
+                  {gameState.settings.buzzerMode === 'moderator-select' ? '¡Levanta la mano!' : '¡Buzzer Activo!'}
                 </div>
               </div>
 
@@ -126,28 +126,47 @@ export const PlayerView: React.FC = () => {
                   {gameState.currentQuestion.question}
                 </h3>
                 
-                {gameState.playersWaiting?.includes(playerId || '') ? (
-                  <div className="bg-red-100 border border-red-400 rounded-lg p-4 mb-4">
-                    <p className="text-red-700 font-semibold">
-                      Ya intentaste responder esta pregunta. Espera a los demás jugadores.
-                    </p>
-                  </div>
-                ) : (
-                  <>
-                    <p className="text-gray-700 text-lg mb-4">
-                      ¡Presiona el buzzer si sabes la respuesta!
-                    </p>
-                    <Button
-                      onClick={handlePressBuzzer}
-                      disabled={buzzerPressed}
-                      className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold text-xl py-4"
-                      size="lg"
-                    >
-                      <Zap className="w-8 h-8 mr-3" />
-                      {buzzerPressed ? 'Buzzer Presionado!' : 'PRESIONAR BUZZER'}
-                    </Button>
-                  </>
-                )}
+                {(() => {
+                  if (gameState.playersWaiting?.includes(playerId || '')) {
+                    return (
+                      <div className="bg-red-100 border border-red-400 rounded-lg p-4 mb-4">
+                        <p className="text-red-700 font-semibold">
+                          Ya intentaste responder esta pregunta. Espera a los demás jugadores.
+                        </p>
+                      </div>
+                    );
+                  }
+                  
+                  if (gameState.settings.buzzerMode === 'moderator-select') {
+                    return (
+                      <div className="bg-blue-100 border border-blue-400 rounded-lg p-4 mb-4">
+                        <p className="text-blue-700 font-semibold text-lg text-center">
+                          🙋‍♂️ ¡Levanta la mano si sabes la respuesta!
+                        </p>
+                        <p className="text-blue-600 text-center mt-2">
+                          El moderador seleccionará quién responde primero
+                        </p>
+                      </div>
+                    );
+                  }
+                  
+                  return (
+                    <>
+                      <p className="text-gray-700 text-lg mb-4">
+                        ¡Presiona el buzzer si sabes la respuesta!
+                      </p>
+                      <Button
+                        onClick={handlePressBuzzer}
+                        disabled={buzzerPressed}
+                        className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold text-xl py-4"
+                        size="lg"
+                      >
+                        <Zap className="w-8 h-8 mr-3" />
+                        {buzzerPressed ? 'Buzzer Presionado!' : 'PRESIONAR BUZZER'}
+                      </Button>
+                    </>
+                  );
+                })()}
               </div>
             </div>
           </Card>
