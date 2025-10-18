@@ -6,12 +6,14 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Trophy, Users, Target, Zap } from 'lucide-react';
 import { getCategoryEmoji } from '@/lib/utils';
+import CountdownAnimation from '@/pages/CountdownAnimation';
 
 export const PlayerView: React.FC = () => {
   const { gameId } = useParams<{ gameId: string }>();
   const navigate = useNavigate();
   const { gameState, setGameState, playerId } = useGameStore();
   const [buzzerPressed, setBuzzerPressed] = useState(false);
+  const [countdownActive, setCountdownActive] = useState(false);
 
   useEffect(() => {
     if (!gameId) {
@@ -34,6 +36,14 @@ export const PlayerView: React.FC = () => {
     // Resetear el estado del buzzer cuando cambie el estado del juego
     if (gameState?.status !== 'waiting-for-buzzer') {
       setBuzzerPressed(false);
+    }
+  }, [gameState?.status]);
+
+  useEffect(() => {
+    if (gameState?.status === 'waiting-for-buzzer') {
+      setCountdownActive(true);
+      const timer = setTimeout(() => setCountdownActive(false), 3000);
+      return () => clearTimeout(timer);
     }
   }, [gameState?.status]);
 
@@ -64,6 +74,7 @@ export const PlayerView: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-400 to-purple-600 p-4">
+      {countdownActive && <CountdownAnimation onComplete={() => {}} />}
       <div className="max-w-4xl mx-auto py-6 space-y-6">
         {/* Header with Game Code */}
         <Card className="text-center">

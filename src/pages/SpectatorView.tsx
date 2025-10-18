@@ -5,6 +5,8 @@ import { GameState } from '../types/game';
 import { subscribeToGame } from '../services/gameService';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
+import CountdownAnimation from '@/pages/CountdownAnimation';
+import Confetti from 'react-confetti';
 
 export const SpectatorView: React.FC = () => {
   const { gameId } = useParams<{ gameId: string }>();
@@ -13,6 +15,7 @@ export const SpectatorView: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
+  const [countdownActive, setCountdownActive] = useState(false);
 
   useEffect(() => {
     if (!gameId) {
@@ -51,6 +54,15 @@ export const SpectatorView: React.FC = () => {
       return () => clearInterval(timer);
     }
   }, [gameState?.currentQuestion?.id, gameState?.settings.timePerQuestion]);
+
+  // Manejo de la animación de cuenta regresiva
+  useEffect(() => {
+    if (gameState?.status === 'waiting-for-buzzer') {
+      setCountdownActive(true);
+      const timer = setTimeout(() => setCountdownActive(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [gameState?.status]);
 
   if (loading) {
     return (
@@ -118,6 +130,11 @@ export const SpectatorView: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-pink-700 p-4">
+      {countdownActive && <CountdownAnimation onComplete={() => {}} />}
+      {gameState.status === 'finished' && (
+        <Confetti width={window.innerWidth} height={window.innerHeight} />
+      )}
+
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-6">
