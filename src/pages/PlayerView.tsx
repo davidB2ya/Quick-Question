@@ -1,0 +1,176 @@
+import React, { useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { subscribeToGame } from '@/services/gameService';
+import { useGameStore } from '@/store/gameStore';
+import { Card } from '@/components/ui/Card';
+import { Trophy, Users, Target } from 'lucide-react';
+import { getCategoryEmoji, getCategoryColor } from '@/lib/utils';
+
+export const PlayerView: React.FC = () => {
+  const { gameId } = useParams<{ gameId: string }>();
+  const navigate = useNavigate();
+  const { gameState, setGameState, playerId } = useGameStore();
+
+  useEffect(() => {
+    if (!gameId) {
+      navigate('/');
+      return;
+    }
+
+    const unsubscribe = subscribeToGame(gameId, (game) => {
+      if (!game) {
+        navigate('/');
+        return;
+      }
+      setGameState(game);
+    });
+
+    return unsubscribe;
+  }, [gameId, navigate, setGameState]);
+
+  if (!gameState) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary-400 to-purple-600 flex items-center justify-center">
+        <div className="text-white text-2xl">Cargando...</div>
+      </div>
+    );
+  }
+
+  const players = Object.values(gameState.players);
+  const sortedPlayers = [...players].sort((a, b) => b.score - a.score);
+  const currentPlayer = playerId ? gameState.players[playerId] : null;
+  const isMyTurn = gameState.currentPlayerTurn === playerId;
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-primary-400 to-purple-600 p-4">
+      <div className="max-w-4xl mx-auto py-6 space-y-6">
+        {/* Header with Game Code */}
+        <Card className="text-center">
+          <div className="space-y-2">
+            <h2 className="text-sm font-semibold text-gray-600">Código de Sala</h2>
+            <div className="text-4xl font-extrabold text-primary-600 tracking-wider">
+              {gameState.code}
+            </div>
+            {currentPlayer && (
+              <p className="text-lg text-gray-700">
+                Hola, <span className="font-bold">{currentPlayer.name}</span>!
+              </p>
+            )}
+          </div>
+        </Card>
+
+        {/* Game Status */}
+        {gameState.status === 'lobby' && (
+          <Card className="text-center bg-yellow-50">
+            <Users className="w-12 h-12 mx-auto mb-3 text-yellow-600" />
+            <h3 className="text-2xl font-bold text-gray-800 mb-2">
+              Esperando Jugadores...
+            </h3>
+            <p className="text-gray-600">
+              {players.length} / {gameState.settings.maxPlayers} jugadores
+            </p>
+            <p className="text-sm text-gray-500 mt-2">
+              El moderador iniciará el juego pronto
+            </p>
+          </Card>
+        )}
+
+        {/* Current Question */}
+        {gameState.status === 'playing' && gameState.currentQuestion && (
+          <Card className={`${isMyTurn ? 'ring-4 ring-green-400' : ''}`}>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-3xl">
+                    {getCategoryEmoji(gameState.currentQuestion.category)}
+                  </span>
+                  <div>
+                    <div className="text-sm font-semibold text-gray-500 uppercase">
+                      {gameState.currentQuestion.category}
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      Ronda {gameState.round} / {gameState.settings.roundsPerGame}
+                    </div>
+                  </div>
+                </div>
+                {isMyTurn && (
+                  <div className="bg-green-500 text-white px-4 py-2 rounded-full font-bold animate-pulse">
+                    ¡Tu turno!
+                  </div>
+                )}
+              </div>
+
+              <div className="bg-gray-50 rounded-lg p-6">
+                <Target className="w-6 h-6 text-primary-600 mb-3" />
+                <h3 className="text-2xl font-bold text-gray-800 mb-2">
+                  {gameState.currentQuestion.question}
+                </h3>
+                {isMyTurn ? (
+                  <p className="text-gray-600 text-lg">
+                    💡 Piensa bien tu respuesta y dila en voz alta al moderador
+                  </p>
+                ) : (
+                  <p className="text-gray-600">
+                    Turno de: <span className="font-bold">
+                      {gameState.currentPlayerTurn && gameState.players[gameState.currentPlayerTurn]?.name}
+                    </span>
+                  </p>
+                )}
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {/* Game Finished */}
+        {gameState.status === 'finished' && (
+          <Card className="text-center bg-gradient-to-br from-yellow-100 to-yellow-200">
+            <Trophy className="w-16 h-16 mx-auto mb-4 text-yellow-600" />
+            <h3 className="text-3xl font-bold text-gray-800 mb-2">
+              ¡Juego Terminado!
+            </h3>
+            <div className="text-xl font-bold text-primary-600 mb-4">
+              Ganador: {sortedPlayers[0]?.name}
+            </div>
+          </Card>
+        )}
+
+        {/* Scoreboard */}
+        <Card>
+          <div className="flex items-center gap-2 mb-4">
+            <Trophy className="w-6 h-6 text-yellow-600" />
+            <h3 className="text-2xl font-bold text-gray-800">Puntajes</h3>
+          </div>
+          <div className="space-y-2">
+            {sortedPlayers.map((player, index) => (
+              <div
+                key={player.id}
+                className={`flex items-center justify-between p-4 rounded-lg ${
+                  player.id === playerId
+                    ? 'bg-primary-100 border-2 border-primary-500'
+                    : 'bg-gray-50'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="text-2xl font-bold text-gray-400">
+                    #{index + 1}
+                  </div>
+                  <div>
+                    <div className="font-semibold text-gray-800">
+                      {player.name}
+                      {player.id === playerId && (
+                        <span className="ml-2 text-primary-600">(Tú)</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <div className="text-2xl font-bold text-primary-600">
+                  {player.score}
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      </div>
+    </div>
+  );
+};
