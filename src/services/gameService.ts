@@ -210,12 +210,56 @@ export const buzzerWrongAnswer = async (gameId: string): Promise<void> => {
       });
     } else {
       // Todos fallaron, pasar a la siguiente pregunta
-      await nextRound(gameId);
+      const newRound = game.round + 1;
+      
+      if (newRound > game.settings.roundsPerGame) {
+        await update(gameRef, {
+          status: 'finished',
+          currentQuestion: null,
+          currentPlayerTurn: null,
+          buzzerPressed: null,
+          playersWaiting: [],
+        });
+      } else {
+        await update(gameRef, {
+          round: newRound,
+          currentQuestion: null,
+          currentPlayerTurn: null,
+          buzzerPressed: null,
+          playersWaiting: [],
+          status: 'playing',
+        });
+      }
     }
   }
 };
 
 // Todos se rinden en modo buzzer
 export const buzzerGiveUp = async (gameId: string): Promise<void> => {
-  await nextRound(gameId);
+  const gameRef = ref(database, `games/${gameId}`);
+  const snapshot = await get(gameRef);
+  
+  if (snapshot.exists()) {
+    const game = snapshot.val() as GameState;
+    const newRound = game.round + 1;
+    
+    if (newRound > game.settings.roundsPerGame) {
+      await update(gameRef, {
+        status: 'finished',
+        currentQuestion: null,
+        currentPlayerTurn: null,
+        buzzerPressed: null,
+        playersWaiting: [],
+      });
+    } else {
+      await update(gameRef, {
+        round: newRound,
+        currentQuestion: null,
+        currentPlayerTurn: null,
+        buzzerPressed: null,
+        playersWaiting: [],
+        status: 'playing',
+      });
+    }
+  }
 };

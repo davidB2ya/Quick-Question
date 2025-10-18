@@ -99,6 +99,19 @@ export const ModeratorView: React.FC = () => {
     try {
       if (gameState.settings.turnMode === 'buzzer') {
         await buzzerWrongAnswer(gameId);
+        // Si todos fallaron, generar nueva pregunta después del delay
+        const currentPlayer = gameState.buzzerPressed;
+        const playersWaiting = gameState.playersWaiting || [];
+        const allPlayers = Object.keys(gameState.players);
+        const remainingPlayers = allPlayers.filter(p => !playersWaiting.includes(p) && p !== currentPlayer);
+        
+        if (remainingPlayers.length === 0) {
+          // Todos fallaron, generar nueva pregunta
+          const newRound = gameState.round + 1;
+          if (newRound <= gameState.settings.roundsPerGame) {
+            setTimeout(() => generateNewQuestion(), 1000);
+          }
+        }
       } else {
         await handleNextQuestion();
       }
@@ -110,11 +123,17 @@ export const ModeratorView: React.FC = () => {
   };
 
   const handleBuzzerGiveUp = async () => {
-    if (!gameId) return;
+    if (!gameId || !gameState) return;
 
     setLoading(true);
     try {
       await buzzerGiveUp(gameId);
+      
+      // Verificar si el juego no terminó para generar nueva pregunta
+      const newRound = gameState.round + 1;
+      if (newRound <= gameState.settings.roundsPerGame) {
+        setTimeout(() => generateNewQuestion(), 1000);
+      }
     } catch (error) {
       console.error('Error:', error);
     } finally {
