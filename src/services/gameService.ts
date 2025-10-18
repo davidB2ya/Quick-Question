@@ -1,6 +1,6 @@
 import { database } from '@/lib/firebase';
 import { ref, set, push, onValue, update, off, get } from 'firebase/database';
-import type { GameState, Player, Question, GameSettings, CategoryType } from '@/types/game';
+import type { GameState, Player, Question, GameSettings } from '@/types/game';
 
 // Generar código de sala único
 export const generateRoomCode = (): string => {
@@ -96,7 +96,7 @@ export const startGame = async (gameId: string): Promise<void> => {
 export const updateCurrentQuestion = async (
   gameId: string,
   question: Question,
-  playerTurnId: string
+  playerTurnId: string | null
 ): Promise<void> => {
   await update(ref(database, `games/${gameId}`), {
     currentQuestion: question,
@@ -151,4 +151,71 @@ export const endGame = async (gameId: string): Promise<void> => {
   await update(ref(database, `games/${gameId}`), {
     status: 'finished',
   });
+};
+
+// Activar modo buzzer (esperar a que los jugadores presionen)
+export const activateBuzzer = async (gameId: string): Promise<void> => {
+  await update(ref(database, `games/${gameId}`), {
+    status: 'waiting-for-buzzer',
+    buzzerPressed: null,
+    playersWaiting: [],
+  });
+};
+
+// Jugador presiona buzzer
+export const pressBuzzer = async (gameId: string, playerId: string): Promise<void> => {
+  const gameRef = ref(database, `games/${gameId}`);
+  const snapshot = await get(gameRef);
+  
+  if (snapshot.exists()) {
+    const game = snapshot.val() as GameState;
+    
+    // Si no hay nadie que haya presionado aún, este jugador es el primero
+    if (!game.buzzerPressed && game.status === 'waiting-for-buzzer') {
+      await update(gameRef, {
+        buzzerPressed: playerId,
+        currentPlayerTurn: playerId,
+        status: 'playing',
+      });
+    }
+  }
+};
+
+// Respuesta incorrecta en modo buzzer - pasar al siguiente
+export const buzzerWrongAnswer = async (gameId: string): Promise<void> => {
+  const gameRef = ref(database, `games/${gameId}`);
+  const snapshot = await get(gameRef);
+  
+  if (snapshot.exists()) {
+    const game = snapshot.val() as GameState;
+    const currentPlayer = game.buzzerPressed;
+    const playersWaiting = game.playersWaiting || [];
+    
+    // Agregar el jugador actual a la lista de espera (ya intentó)
+    if (currentPlayer && !playersWaiting.includes(currentPlayer)) {
+      playersWaiting.push(currentPlayer);
+    }
+    
+    // Verificar si quedan jugadores por intentar
+    const allPlayers = Object.keys(game.players);
+    const remainingPlayers = allPlayers.filter(p => !playersWaiting.includes(p));
+    
+    if (remainingPlayers.length > 0) {
+      // Volver a activar el buzzer para los jugadores restantes
+      await update(gameRef, {
+        status: 'waiting-for-buzzer',
+        buzzerPressed: null,
+        currentPlayerTurn: null,
+        playersWaiting,
+      });
+    } else {
+      // Todos fallaron, pasar a la siguiente pregunta
+      await nextRound(gameId);
+    }
+  }
+};
+
+// Todos se rinden en modo buzzer
+export const buzzerGiveUp = async (gameId: string): Promise<void> => {
+  await nextRound(gameId);
 };

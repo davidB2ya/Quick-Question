@@ -1,15 +1,17 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { subscribeToGame } from '@/services/gameService';
+import { subscribeToGame, pressBuzzer } from '@/services/gameService';
 import { useGameStore } from '@/store/gameStore';
 import { Card } from '@/components/ui/Card';
-import { Trophy, Users, Target } from 'lucide-react';
-import { getCategoryEmoji, getCategoryColor } from '@/lib/utils';
+import { Button } from '@/components/ui/Button';
+import { Trophy, Users, Target, Zap } from 'lucide-react';
+import { getCategoryEmoji } from '@/lib/utils';
 
 export const PlayerView: React.FC = () => {
   const { gameId } = useParams<{ gameId: string }>();
   const navigate = useNavigate();
   const { gameState, setGameState, playerId } = useGameStore();
+  const [buzzerPressed, setBuzzerPressed] = useState(false);
 
   useEffect(() => {
     if (!gameId) {
@@ -27,6 +29,25 @@ export const PlayerView: React.FC = () => {
 
     return unsubscribe;
   }, [gameId, navigate, setGameState]);
+
+  useEffect(() => {
+    // Resetear el estado del buzzer cuando cambie el estado del juego
+    if (gameState?.status !== 'waiting-for-buzzer') {
+      setBuzzerPressed(false);
+    }
+  }, [gameState?.status]);
+
+  const handlePressBuzzer = async () => {
+    if (!gameId || !playerId || buzzerPressed) return;
+
+    setBuzzerPressed(true);
+    try {
+      await pressBuzzer(gameId, playerId);
+    } catch (error) {
+      console.error('Error pressing buzzer:', error);
+      setBuzzerPressed(false);
+    }
+  };
 
   if (!gameState) {
     return (
@@ -75,6 +96,63 @@ export const PlayerView: React.FC = () => {
           </Card>
         )}
 
+        {/* Waiting for Buzzer */}
+        {gameState.status === 'waiting-for-buzzer' && gameState.currentQuestion && (
+          <Card className="bg-gradient-to-br from-yellow-100 to-orange-100 border-4 border-yellow-400">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-3xl">
+                    {getCategoryEmoji(gameState.currentQuestion.category)}
+                  </span>
+                  <div>
+                    <div className="text-sm font-semibold text-gray-600 uppercase">
+                      {gameState.currentQuestion.category}
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      Ronda {gameState.round} / {gameState.settings.roundsPerGame}
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-yellow-500 text-white px-4 py-2 rounded-full font-bold animate-pulse">
+                  <Zap className="w-4 h-4 inline mr-2" />
+                  ¡Buzzer Activo!
+                </div>
+              </div>
+
+              <div className="bg-white rounded-lg p-6 border-2 border-yellow-400">
+                <Target className="w-6 h-6 text-yellow-600 mb-3" />
+                <h3 className="text-2xl font-bold text-gray-800 mb-4">
+                  {gameState.currentQuestion.question}
+                </h3>
+                
+                {gameState.playersWaiting?.includes(playerId || '') ? (
+                  <div className="bg-red-100 border border-red-400 rounded-lg p-4 mb-4">
+                    <p className="text-red-700 font-semibold">
+                      Ya intentaste responder esta pregunta. Espera a los demás jugadores.
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-gray-700 text-lg mb-4">
+                      ¡Presiona el buzzer si sabes la respuesta!
+                    </p>
+                    <Button
+                      onClick={handlePressBuzzer}
+                      disabled={buzzerPressed}
+                      className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold text-xl py-4"
+                      size="lg"
+                    >
+                      <Zap className="w-8 h-8 mr-3" />
+                      {buzzerPressed ? 'Buzzer Presionado!' : 'PRESIONAR BUZZER'}
+                    </Button>
+                  </>
+                )}
+              </div>
+            </div>
+          </Card>
+        )}
+
         {/* Current Question */}
         {gameState.status === 'playing' && gameState.currentQuestion && (
           <Card className={`${isMyTurn ? 'ring-4 ring-green-400' : ''}`}>
@@ -95,7 +173,7 @@ export const PlayerView: React.FC = () => {
                 </div>
                 {isMyTurn && (
                   <div className="bg-green-500 text-white px-4 py-2 rounded-full font-bold animate-pulse">
-                    ¡Tu turno!
+                    {gameState.settings.turnMode === 'buzzer' ? '¡Presionaste primero!' : '¡Tu turno!'}
                   </div>
                 )}
               </div>
@@ -111,9 +189,10 @@ export const PlayerView: React.FC = () => {
                   </p>
                 ) : (
                   <p className="text-gray-600">
-                    Turno de: <span className="font-bold">
-                      {gameState.currentPlayerTurn && gameState.players[gameState.currentPlayerTurn]?.name}
-                    </span>
+                    {gameState.settings.turnMode === 'buzzer' 
+                      ? `${gameState.currentPlayerTurn && gameState.players?.[gameState.currentPlayerTurn]?.name} presionó el buzzer primero`
+                      : `Turno de: ${gameState.currentPlayerTurn && gameState.players?.[gameState.currentPlayerTurn]?.name}`
+                    }
                   </p>
                 )}
               </div>

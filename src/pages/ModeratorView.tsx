@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { subscribeToGame, startGame, updateCurrentQuestion, updatePlayerScore, nextRound, endGame } from '@/services/gameService';
+import { subscribeToGame, startGame, updateCurrentQuestion, updatePlayerScore, nextRound, endGame, activateBuzzer, buzzerWrongAnswer, buzzerGiveUp } from '@/services/gameService';
 import { generateQuestion } from '@/services/questionService';
 import { useGameStore } from '@/store/gameStore';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Trophy, Users, Play, Check, X, StopCircle } from 'lucide-react';
+import { Trophy, Users, Play, Check, X, StopCircle, Zap, SkipForward } from 'lucide-react';
 import { getCategoryEmoji } from '@/lib/utils';
 // type import removed — not needed in this file
 
@@ -57,11 +57,8 @@ export const ModeratorView: React.FC = () => {
   const generateNewQuestion = async () => {
     if (!gameId || !gameState) return;
 
-  const players = Object.keys(gameState.players ?? {});
+    const players = Object.keys(gameState.players ?? {});
     if (players.length === 0) return;
-
-    // Seleccionar jugador aleatorio
-    const randomPlayer = players[Math.floor(Math.random() * players.length)];
 
     // Seleccionar categoría aleatoria
     const categories = gameState.settings.categories;
@@ -70,7 +67,15 @@ export const ModeratorView: React.FC = () => {
     // Generar pregunta
     const question = await generateQuestion(randomCategory);
 
-    await updateCurrentQuestion(gameId, question, randomPlayer);
+    if (gameState.settings.turnMode === 'automatic') {
+      // Modo automático: seleccionar jugador aleatorio
+      const randomPlayer = players[Math.floor(Math.random() * players.length)];
+      await updateCurrentQuestion(gameId, question, randomPlayer);
+    } else {
+      // Modo buzzer: mostrar pregunta y activar buzzer
+      await updateCurrentQuestion(gameId, question, null);
+      await activateBuzzer(gameId);
+    }
   };
 
   const handleCorrectAnswer = async () => {
@@ -88,11 +93,28 @@ export const ModeratorView: React.FC = () => {
   };
 
   const handleWrongAnswer = async () => {
+    if (!gameId || !gameState) return;
+
+    setLoading(true);
+    try {
+      if (gameState.settings.turnMode === 'buzzer') {
+        await buzzerWrongAnswer(gameId);
+      } else {
+        await handleNextQuestion();
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleBuzzerGiveUp = async () => {
     if (!gameId) return;
 
     setLoading(true);
     try {
-      await handleNextQuestion();
+      await buzzerGiveUp(gameId);
     } catch (error) {
       console.error('Error:', error);
     } finally {
@@ -195,6 +217,69 @@ export const ModeratorView: React.FC = () => {
           </Card>
         )}
 
+        {/* Waiting for Buzzer State */}
+        {gameState.status === 'waiting-for-buzzer' && gameState.currentQuestion && (
+          <Card className="bg-gradient-to-br from-yellow-900 to-orange-900">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="text-5xl">
+                    {getCategoryEmoji(gameState.currentQuestion.category)}
+                  </span>
+                  <div>
+                    <div className="text-sm font-semibold text-gray-300 uppercase">
+                      {gameState.currentQuestion.category}
+                    </div>
+                    <div className="text-sm text-gray-400">
+                      Dificultad: {gameState.currentQuestion.difficulty}
+                    </div>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="bg-yellow-500 text-yellow-900 px-4 py-2 rounded-full font-bold animate-pulse">
+                    <Zap className="w-4 h-4 inline mr-2" />
+                    Esperando Buzzer
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white/10 rounded-lg p-6">
+                <h3 className="text-3xl font-bold mb-4">
+                  {gameState.currentQuestion.question}
+                </h3>
+                <div className="bg-yellow-500/20 border-2 border-yellow-500 rounded-lg p-4 mb-4">
+                  <div className="text-sm font-semibold text-yellow-300 mb-1">
+                    ¡Los jugadores pueden presionar el buzzer!
+                  </div>
+                  <div className="text-yellow-200">
+                    El primer jugador en presionar podrá responder
+                  </div>
+                </div>
+                <div className="bg-green-500/20 border-2 border-green-500 rounded-lg p-4">
+                  <div className="text-sm font-semibold text-green-300 mb-1">
+                    RESPUESTA CORRECTA:
+                  </div>
+                  <div className="text-2xl font-bold text-green-300">
+                    {gameState.currentQuestion.answer}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-4">
+                <Button
+                  onClick={handleBuzzerGiveUp}
+                  disabled={loading}
+                  className="flex-1 bg-gray-600 hover:bg-gray-700"
+                  size="lg"
+                >
+                  <SkipForward className="w-6 h-6 mr-2" />
+                  Todos se Rinden
+                </Button>
+              </div>
+            </div>
+          </Card>
+        )}
+
         {/* Playing State */}
         {gameState.status === 'playing' && gameState.currentQuestion && (
           <>
@@ -216,7 +301,9 @@ export const ModeratorView: React.FC = () => {
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-sm text-gray-400">Turno de:</div>
+                    <div className="text-sm text-gray-400">
+                      {gameState.settings.turnMode === 'buzzer' ? 'Jugador que presionó:' : 'Turno de:'}
+                    </div>
                     <div className="text-xl font-bold text-green-400">
                       {gameState.currentPlayerTurn && gameState.players?.[gameState.currentPlayerTurn]?.name}
                     </div>
@@ -264,8 +351,19 @@ export const ModeratorView: React.FC = () => {
                     size="lg"
                   >
                     <X className="w-6 h-6 mr-2" />
-                    Respuesta Incorrecta
+                    {gameState.settings.turnMode === 'buzzer' ? 'Incorrecta - Siguiente' : 'Respuesta Incorrecta'}
                   </Button>
+                  {gameState.settings.turnMode === 'buzzer' && (
+                    <Button
+                      onClick={handleBuzzerGiveUp}
+                      disabled={loading}
+                      className="bg-gray-600 hover:bg-gray-700"
+                      size="lg"
+                    >
+                      <SkipForward className="w-6 h-6 mr-2" />
+                      Rendirse
+                    </Button>
+                  )}
                 </div>
               </div>
             </Card>

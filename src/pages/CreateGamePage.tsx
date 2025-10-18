@@ -49,6 +49,7 @@ export const CreateGamePage: React.FC = () => {
         maxPlayers,
         roundsPerGame,
         categories: selectedCategories,
+        turnMode,
       });
 
       setGameId(gameId);
@@ -118,6 +119,47 @@ export const CreateGamePage: React.FC = () => {
             <div className="flex justify-between text-sm text-gray-500 mt-1">
               <span>5</span>
               <span>20</span>
+            </div>
+          </div>
+
+          {/* Turn Mode */}
+          <div>
+            <label className="block text-lg font-semibold text-gray-700 mb-3">
+              Modo de Turnos
+            </label>
+            <div className="grid grid-cols-1 gap-3">
+              <button
+                onClick={() => setTurnMode('automatic')}
+                className={`py-4 px-4 rounded-lg font-semibold transition-all flex items-center gap-3 ${
+                  turnMode === 'automatic'
+                    ? 'bg-primary-600 text-white shadow-lg'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <Timer className="w-6 h-6" />
+                <div className="text-left">
+                  <div className="font-bold">Turnos Automáticos</div>
+                  <div className="text-sm opacity-80">
+                    El moderador asigna turnos automáticamente
+                  </div>
+                </div>
+              </button>
+              <button
+                onClick={() => setTurnMode('buzzer')}
+                className={`py-4 px-4 rounded-lg font-semibold transition-all flex items-center gap-3 ${
+                  turnMode === 'buzzer'
+                    ? 'bg-primary-600 text-white shadow-lg'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <Zap className="w-6 h-6" />
+                <div className="text-left">
+                  <div className="font-bold">Modo Buzzer</div>
+                  <div className="text-sm opacity-80">
+                    Los jugadores presionan un botón para responder
+                  </div>
+                </div>
+              </button>
             </div>
           </div>
 
