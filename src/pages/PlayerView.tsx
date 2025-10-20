@@ -74,7 +74,6 @@ export const PlayerView: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-400 to-purple-600 p-4">
-      {countdownActive && <CountdownAnimation onComplete={() => {}} />}
       <div className="max-w-4xl mx-auto py-6 space-y-6">
         {/* Header with Game Code */}
         <Card className="text-center">
@@ -132,52 +131,60 @@ export const PlayerView: React.FC = () => {
               </div>
 
               <div className="bg-white rounded-lg p-6 border-2 border-yellow-400">
-                <Target className="w-6 h-6 text-yellow-600 mb-3" />
-                <h3 className="text-2xl font-bold text-gray-800 mb-4">
-                  {gameState.currentQuestion.question}
-                </h3>
-                
-                {(() => {
-                  if (gameState.playersWaiting?.includes(playerId || '')) {
-                    return (
-                      <div className="bg-red-100 border border-red-400 rounded-lg p-4 mb-4">
-                        <p className="text-red-700 font-semibold">
-                          Ya intentaste responder esta pregunta. Espera a los demás jugadores.
-                        </p>
-                      </div>
-                    );
-                  }
-                  
-                  if (gameState.settings.buzzerMode === 'moderator-select') {
-                    return (
-                      <div className="bg-blue-100 border border-blue-400 rounded-lg p-4 mb-4">
-                        <p className="text-blue-700 font-semibold text-lg text-center">
-                          🙋‍♂️ ¡Levanta la mano si sabes la respuesta!
-                        </p>
-                        <p className="text-blue-600 text-center mt-2">
-                          El moderador seleccionará quién responde primero
-                        </p>
-                      </div>
-                    );
-                  }
-                  
-                  return (
-                    <>
-                      <p className="text-gray-700 text-lg mb-4">
-                        ¡Presiona el buzzer si sabes la respuesta!
-                      </p>
-                      <Button
-                        onClick={handlePressBuzzer}
-                        disabled={buzzerPressed}
-                        className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold text-xl py-4"
-                        size="lg"
-                      >
-                        <Zap className="w-8 h-8 mr-3" />
-                        {buzzerPressed ? 'Buzzer Presionado!' : 'PRESIONAR BUZZER'}
-                      </Button>
-                    </>
-                  );
-                })()}
+
+                {countdownActive ? <CountdownAnimation onComplete={() => { }} />
+                  :
+                  <>
+                    <Target className="w-6 h-6 text-yellow-600 mb-3" />
+                    <h3 className="text-2xl font-bold text-gray-800 mb-4">
+                      {gameState.currentQuestion.question}
+                    </h3>
+
+                    {(() => {
+                      if (gameState.playersWaiting?.includes(playerId || '')) {
+                        return (
+                          <div className="bg-red-100 border border-red-400 rounded-lg p-4 mb-4">
+                            <p className="text-red-700 font-semibold">
+                              Ya intentaste responder esta pregunta. Espera a los demás jugadores.
+                            </p>
+                          </div>
+                        );
+                      }
+
+                      if (gameState.settings.buzzerMode === 'moderator-select') {
+                        return (
+                          <div className="bg-blue-100 border border-blue-400 rounded-lg p-4 mb-4">
+                            <p className="text-blue-700 font-semibold text-lg text-center">
+                              🙋‍♂️ ¡Levanta la mano si sabes la respuesta!
+                            </p>
+                            <p className="text-blue-600 text-center mt-2">
+                              El moderador seleccionará quién responde primero
+                            </p>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <>
+                          <p className="text-gray-700 text-lg mb-4">
+                            ¡Presiona el buzzer si sabes la respuesta!
+                          </p>
+                          <Button
+                            onClick={handlePressBuzzer}
+                            disabled={buzzerPressed}
+                            className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold text-xl py-4"
+                            size="lg"
+                          >
+                            <Zap className="w-8 h-8 mr-3" />
+                            {buzzerPressed ? 'Buzzer Presionado!' : 'PRESIONAR BUZZER'}
+                          </Button>
+                        </>
+                      );
+                    })()}
+                  </>
+                }
+
+
               </div>
             </div>
           </Card>
@@ -219,7 +226,7 @@ export const PlayerView: React.FC = () => {
                   </p>
                 ) : (
                   <p className="text-gray-600">
-                    {gameState.settings.turnMode === 'buzzer' 
+                    {gameState.settings.turnMode === 'buzzer'
                       ? `${gameState.currentPlayerTurn && gameState.players?.[gameState.currentPlayerTurn]?.name} presionó el buzzer primero`
                       : `Turno de: ${gameState.currentPlayerTurn && gameState.players?.[gameState.currentPlayerTurn]?.name}`
                     }
@@ -253,11 +260,10 @@ export const PlayerView: React.FC = () => {
             {sortedPlayers.map((player, index) => (
               <div
                 key={player.id}
-                className={`flex items-center justify-between p-4 rounded-lg ${
-                  player.id === playerId
-                    ? 'bg-primary-100 border-2 border-primary-500'
-                    : 'bg-gray-50'
-                }`}
+                className={`flex items-center justify-between p-4 rounded-lg ${player.id === playerId
+                  ? 'bg-primary-100 border-2 border-primary-500'
+                  : 'bg-gray-50'
+                  }`}
               >
                 <div className="flex items-center gap-3">
                   <div className="text-2xl font-bold text-gray-400">

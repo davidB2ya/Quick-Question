@@ -3,8 +3,10 @@
   justify-content: center;
   align-items: center;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.8);
-  position: absolute;
+  min-height: 220px;
+  /* background-color: rgba(0, 0, 0, 0.8); */
+  background-color: transparent;
+  position: relative;
   top: 0;
   left: 0;
   width: 100%;
@@ -14,14 +16,17 @@
 .countdown-number {
   font-size: 5rem;
   font-weight: bold;
-  color: white;
+  color: rgb(250 204 21 / var(--tw-border-opacity, 1));
   animation: fadeInOut 1s ease-in-out;
 }
 
 @keyframes fadeInOut {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 0;
   }
+
   50% {
     opacity: 1;
   }

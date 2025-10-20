@@ -41,7 +41,7 @@ export const SpectatorView: React.FC = () => {
   useEffect(() => {
     if (gameState?.settings.timePerQuestion && gameState.status === 'playing' && gameState.currentQuestion) {
       setTimeLeft(gameState.settings.timePerQuestion);
-      
+
       const timer = setInterval(() => {
         setTimeLeft(prev => {
           if (prev && prev > 0) {
@@ -130,7 +130,6 @@ export const SpectatorView: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-pink-700 p-4">
-      {countdownActive && <CountdownAnimation onComplete={() => {}} />}
       {gameState.status === 'finished' && (
         <Confetti width={window.innerWidth} height={window.innerHeight} />
       )}
@@ -174,7 +173,7 @@ export const SpectatorView: React.FC = () => {
                       {timeLeft}s
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                      <div 
+                      <div
                         className={`h-2 rounded-full transition-all duration-1000 ${timeLeft <= 10 ? 'bg-red-500' : 'bg-blue-500'}`}
                         style={{ width: `${((timeLeft / (gameState.settings.timePerQuestion || 30)) * 100)}%` }}
                       ></div>
@@ -189,25 +188,32 @@ export const SpectatorView: React.FC = () => {
 
                 {/* Pregunta */}
                 {gameState.currentQuestion ? (
-                  <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-6 mb-4">
-                    <h2 className="text-2xl md:text-4xl font-bold text-gray-800 mb-4">
-                      {gameState.currentQuestion.question}
-                    </h2>
-                    
-                    {/* Información del buzzer si aplica */}
-                    {gameState.settings.turnMode === 'buzzer' && gameState.buzzerPressed && (
-                      <div className="bg-yellow-100 border border-yellow-300 rounded-lg p-3 mt-4">
-                        <p className="text-yellow-800 font-semibold">
-                          🔥 {gameState.players[gameState.buzzerPressed]?.name} presionó el buzzer!
-                        </p>
-                      </div>
-                    )}
+                  countdownActive ?
+                    <CountdownAnimation onComplete={() => { }} />
+                    :
+                    <>
+                      <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-6 mb-4">
+                        <h2 className="text-2xl md:text-4xl font-bold text-gray-800 mb-4">
+                          {gameState.currentQuestion.question}
+                        </h2>
 
-                    {/* Nota: Las respuestas NO se muestran en la vista de espectador */}
-                    <div className="text-sm text-gray-500 italic mt-4">
-                      * La respuesta solo es visible para el moderador
-                    </div>
-                  </div>
+                        {/* Información del buzzer si aplica */}
+                        {gameState.settings.turnMode === 'buzzer' && gameState.buzzerPressed && (
+                          <div className="bg-yellow-100 border border-yellow-300 rounded-lg p-3 mt-4">
+                            <p className="text-yellow-800 font-semibold">
+                              🔥 {gameState.players[gameState.buzzerPressed]?.name} presionó el buzzer!
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Nota: Las respuestas NO se muestran en la vista de espectador */}
+                        <div className="text-sm text-gray-500 italic mt-4">
+                          * La respuesta solo es visible para el moderador
+                        </div>
+                      </div>
+                    </>
+
+
                 ) : (
                   <div className="bg-gray-50 rounded-lg p-8 mb-4">
                     <p className="text-xl text-gray-600">
@@ -235,26 +241,24 @@ export const SpectatorView: React.FC = () => {
                 <Users className="w-5 h-5 text-blue-600" />
                 <h3 className="text-xl font-bold">Jugadores</h3>
               </div>
-              
+
               <div className="space-y-3">
                 {sortedPlayers.map((player, index) => (
-                  <div 
-                    key={player.id} 
-                    className={`flex items-center justify-between p-3 rounded-lg transition-all ${
-                      player.id === gameState.currentPlayerTurn 
-                        ? 'bg-blue-100 border-2 border-blue-300 transform scale-105' 
-                        : 'bg-gray-50'
-                    }`}
+                  <div
+                    key={player.id}
+                    className={`flex items-center justify-between p-3 rounded-lg transition-all ${player.id === gameState.currentPlayerTurn
+                      ? 'bg-blue-100 border-2 border-blue-300 transform scale-105'
+                      : 'bg-gray-50'
+                      }`}
                   >
                     <div className="flex items-center gap-3">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-white ${
-                        (() => {
-                          if (index === 0) return 'bg-yellow-500';
-                          if (index === 1) return 'bg-gray-400';
-                          if (index === 2) return 'bg-orange-500';
-                          return 'bg-blue-500';
-                        })()
-                      }`}>
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-white ${(() => {
+                        if (index === 0) return 'bg-yellow-500';
+                        if (index === 1) return 'bg-gray-400';
+                        if (index === 2) return 'bg-orange-500';
+                        return 'bg-blue-500';
+                      })()
+                        }`}>
                         {index === 0 ? '🏆' : index + 1}
                       </div>
                       <div>
@@ -270,7 +274,7 @@ export const SpectatorView: React.FC = () => {
                     </div>
                   </div>
                 ))}
-                
+
                 {sortedPlayers.length === 0 && (
                   <p className="text-gray-500 text-center py-4">
                     No hay jugadores aún
@@ -296,8 +300,8 @@ export const SpectatorView: React.FC = () => {
 
         {/* Footer */}
         <div className="text-center mt-6">
-          <Button 
-            onClick={() => navigate('/')} 
+          <Button
+            onClick={() => navigate('/')}
             variant="outline"
             className="bg-white/10 border-white/20 text-white hover:bg-white/20"
           >

@@ -604,7 +604,7 @@ export const ModeratorView: React.FC = () => {
       </div>
 
       {/* Integrate CountdownAnimation into the component */}
-      {countdownActive && <CountdownAnimation onComplete={() => {}} />}
+      {/* {countdownActive && <CountdownAnimation onComplete={() => {}} />} */}
     </div>
   );
 };
