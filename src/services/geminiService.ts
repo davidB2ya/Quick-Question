@@ -1,6 +1,6 @@
-import { CategoryType, DifficultyType, Question } from '../types/game';
+import { CategoryType, DifficultyLevel, Question } from '../types/game';
 
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY; // Usa tu variable de entorno
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
 
 const CATEGORY_THEMES: Record<CategoryType, string> = {
@@ -14,7 +14,7 @@ const CATEGORY_THEMES: Record<CategoryType, string> = {
 
 export async function generateQuestion(
   category: CategoryType,
-  difficulty: DifficultyType
+  difficulty: DifficultyLevel
 ): Promise<Question> {
   const systemPrompt = `Eres un experto en crear preguntas de trivia divertidas para jóvenes colombianos. 
 Crea preguntas sobre ${CATEGORY_THEMES[category]}.
@@ -94,67 +94,3 @@ IMPORTANTE:
   }
 }
 
-// Función para generar múltiples preguntas
-export async function generateMultipleQuestions(
-  category: CategoryType,
-  difficulty: DifficultyType,
-  count: number
-): Promise<Question[]> {
-  const questions: Question[] = [];
-  
-  for (let i = 0; i < count; i++) {
-    try {
-      const question = await generateQuestion(category, difficulty);
-      questions.push(question);
-      
-      // Pequeña pausa para no exceder límites de rate
-      await new Promise(resolve => setTimeout(resolve, 1000));
-    } catch (error) {
-      console.error(`Error generando pregunta ${i + 1}:`, error);
-    }
-  }
-  
-  return questions;
-}
-
-// Función para listar modelos disponibles en la API de Gemini
-export async function listAvailableModels(): Promise<void> {
-  const GEMINI_LIST_MODELS_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
-
-  try {
-    const response = await fetch(`${GEMINI_LIST_MODELS_URL}?key=${GEMINI_API_KEY}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Error al listar modelos: ${response.status}`);
-    }
-
-    const data = await response.json();
-    console.log('Modelos disponibles:', data.models);
-  } catch (error) {
-    console.error('Error al obtener modelos disponibles:', error);
-  }
-}
-
-// Ejemplo de uso
-export async function ejemplo() {
-  try {
-    // Generar una pregunta
-    const pregunta = await generateQuestion('deportes', 'medium');
-    console.log('Pregunta generada:', pregunta);
-
-    // Generar múltiples preguntas
-    const preguntas = await generateMultipleQuestions('musica', 'easy', 3);
-    console.log('Preguntas generadas:', preguntas);
-
-    // Listar modelos disponibles
-    await listAvailableModels();
-
-  } catch (error) {
-    console.error('Error:', error);
-  }
-}
