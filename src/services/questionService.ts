@@ -1,4 +1,5 @@
 import type { Question, CategoryType, DifficultyLevel } from '@/types/game';
+import { generateQuestion } from '@/services/geminiService';
 
 // Sistema anti-repetición: tracking de preguntas usadas por partida
 const usedQuestions: Record<string, Set<string>> = {};
@@ -34,17 +35,43 @@ const CATEGORY_THEMES: Record<CategoryType, string> = {
 };
 
 // Generador principal de preguntas - Intenta IA primero, fallback a banco estático
-export const generateQuestion = async (
+export const generateQuestionTry = async (
   category: CategoryType,
   difficulty: DifficultyLevel = 'medium',
   gameId?: string
 ): Promise<Question> => {
-  // Usar el generador expandido con sistema anti-repetición
   try {
-    return await generateExpandedQuestion(category, difficulty, gameId);
+    // Intentar generar pregunta con IA
+    const aiQuestion = await generateQuestion(category, difficulty);
+
+    // Verificar si la pregunta generada ya fue usada
+    if (gameId && isQuestionUsed(gameId, aiQuestion.id)) {
+      throw new Error('Pregunta generada por IA ya fue usada');
+    }
+
+    // Marcar la pregunta como usada y devolverla
+    if (gameId) {
+      markQuestionAsUsed(gameId, aiQuestion.id);
+    }
+
+    return aiQuestion;
   } catch (error) {
-    console.warn('Expanded generation failed, using static bank:', error);
-    return generateQuestionFromBank(category, difficulty);
+    console.warn('Error al generar pregunta con IA, usando banco estático:', error);
+
+    // Fallback al banco estático
+    const staticQuestion = await generateQuestionFromBank(category, difficulty);
+
+    // Verificar si la pregunta del banco ya fue usada
+    if (gameId && isQuestionUsed(gameId, staticQuestion.id)) {
+      throw new Error('Pregunta del banco estático ya fue usada');
+    }
+
+    // Marcar la pregunta como usada y devolverla
+    if (gameId) {
+      markQuestionAsUsed(gameId, staticQuestion.id);
+    }
+
+    return staticQuestion;
   }
 };
 
@@ -59,64 +86,19 @@ export const generateQuestionWithAI = async (
   category: CategoryType,
   difficulty: DifficultyLevel = 'medium'
 ): Promise<Question> => {
-  const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
-
-  if (!apiKey) {
-    throw new Error('OpenAI API key not configured');
-  }
-
   try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: 'gpt-3.5-turbo',
-        messages: [
-          {
-            role: 'system',
-            content: `Eres un experto en crear preguntas de trivia divertidas para jóvenes. 
-            Crea preguntas sobre ${CATEGORY_THEMES[category]}.
-            
-            Responde SOLO con un JSON válido con esta estructura exacta:
-            {
-              "question": "la pregunta aquí",
-              "answer": "la respuesta aquí",
-              "difficulty": "${difficulty}",
-              "funFact": "un dato curioso relacionado"
-            }
-            
-            No incluyas explicaciones adicionales, solo el JSON.`
-          },
-          {
-            role: 'user',
-            content: `Genera una pregunta de ${category} de dificultad ${difficulty} para jóvenes colombianos. Que sea divertida y actual.`
-          }
-        ],
-        max_tokens: 200,
-        temperature: 0.8,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    const content = JSON.parse(data.choices[0].message.content.trim());
+    const geminiQuestion = await generateQuestion(category, difficulty);
 
     return {
       id: `q_${Date.now()}_${Math.random().toString(36).substring(7)}`,
       category,
-      question: content.question,
-      answer: content.answer,
-      difficulty: content.difficulty,
-      funFact: content.funFact,
+      question: geminiQuestion.question,
+      answer: geminiQuestion.answer,
+      difficulty: geminiQuestion.difficulty,
+      funFact: geminiQuestion.funFact,
     };
   } catch (error) {
-    console.error('Error generating question with AI:', error);
+    console.error('Error generating question with Gemini:', error);
     return generateExpandedQuestion(category, difficulty);
   }
 };
@@ -1855,7 +1837,7 @@ const expandedQuestionBank: Record<CategoryType, Record<DifficultyLevel, Questio
         question: '¿En qué año se fundó Netflix?',
         answer: '1997',
         difficulty: 'hard',
-        funFact: 'Comenzó como servicio de alquiler de DVDs por correo'
+        funFact: 'Comenzó como servicio de alquiler de DVDs por correo',
       },
       {
         id: 'ent_hard_4',

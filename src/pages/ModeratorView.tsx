@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { subscribeToGame, startGame, updateCurrentQuestion, updatePlayerScore, nextRound, endGame, activateBuzzer, activateBuzzerManual, moderatorSelectPlayer, buzzerWrongAnswer, buzzerGiveUp, skipQuestion } from '@/services/gameService';
-import { generateQuestion } from '@/services/questionService';
+import { generateQuestionTry } from '@/services/questionService';
 import { useGameStore } from '@/store/gameStore';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -99,7 +99,7 @@ export const ModeratorView: React.FC = () => {
     const randomCategory = categories[Math.floor(Math.random() * categories.length)];
 
     // Generar pregunta con la dificultad del juego y sistema anti-repetición
-    const question = await generateQuestion(randomCategory, gameState.settings.difficultyLevel, gameId);
+    const question = await generateQuestionTry(randomCategory, gameState.settings.difficultyLevel, gameId);
 
     setCountdownActive(true); // New state to trigger countdown
 

@@ -11,7 +11,7 @@ export interface Question {
   category: CategoryType;
   question: string;
   answer: string;
-  difficulty: 'easy' | 'medium' | 'hard';
+  difficulty: DifficultyType;
   funFact?: string;
 }
 
@@ -22,6 +22,8 @@ export type CategoryType =
   | 'ciencia' 
   | 'entretenimiento' 
   | 'geografia';
+
+export type DifficultyType = 'easy' | 'medium' | 'hard';
 
 export type TurnMode = 'automatic' | 'buzzer';
 
