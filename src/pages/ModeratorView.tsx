@@ -435,7 +435,7 @@ export const ModeratorView: React.FC = () => {
                   )}
                 </div>
 
-                <div className="flex gap-4">
+                <div className="flex flex-col sm:flex-row gap-4">
                   <Button
                     onClick={handleCorrectAnswer}
                     disabled={loading}
