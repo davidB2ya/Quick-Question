@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { subscribeToGame, startGame, updateCurrentQuestion, updatePlayerScore, nextRound, endGame, activateBuzzer, activateBuzzerManual, moderatorSelectPlayer, buzzerWrongAnswer, buzzerGiveUp, skipQuestion } from '@/services/gameService';
 import { generateQuestionTry } from '@/services/questionService';
@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/Button';
 import { Trophy, Users, Play, Check, X, StopCircle, Zap, SkipForward, User, Eye, RefreshCw } from 'lucide-react';
 import { getCategoryEmoji } from '@/lib/utils';
 import './CountdownAnimation.css'; // Add a CSS file for animations
-import { CSSTransition } from 'react-transition-group';
 import Confetti from 'react-confetti';
 
 // type import removed — not needed in this file
@@ -20,41 +19,11 @@ const getMedalEmoji = (index: number) => {
   return '👤';
 };
 
-// Corrected CSSTransition usage
-const CountdownAnimation: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
-  const [count, setCount] = useState(3);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-
-  useEffect(() => {
-    timerRef.current = setInterval(() => {
-      setCount((prev) => {
-        if (prev === 1) {
-          clearInterval(timerRef.current!);
-          onComplete();
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(timerRef.current!);
-  }, [onComplete]);
-
-  return (
-    <div className="countdown-container">
-      <CSSTransition in={count > 0} timeout={300} classNames="fade" unmountOnExit>
-        <div className="countdown-number">{count}</div>
-      </CSSTransition>
-    </div>
-  );
-};
-
 export const ModeratorView: React.FC = () => {
   const { gameId } = useParams<{ gameId: string }>();
   const navigate = useNavigate();
   const { gameState, setGameState } = useGameStore();
   const [loading, setLoading] = useState(false);
-  const [countdownActive, setCountdownActive] = useState(false);
 
   useEffect(() => {
     if (!gameId) {
@@ -101,10 +70,7 @@ export const ModeratorView: React.FC = () => {
     // Generar pregunta con la dificultad del juego y sistema anti-repetición
     const question = await generateQuestionTry(randomCategory, gameState.settings.difficultyLevel, gameId);
 
-    setCountdownActive(true); // New state to trigger countdown
-
     setTimeout(async () => {
-      setCountdownActive(false);
 
       if (gameState.settings.turnMode === 'automatic') {
         // Modo automático: seleccionar jugador aleatorio
@@ -252,7 +218,7 @@ export const ModeratorView: React.FC = () => {
         <Card className="bg-gray-800 text-white">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold mb-2">Panel del Moderador</h1>
+                <h1 className="text-2xl font-bold mb-2 text-gray-400">Panel del Moderador</h1>
               <div className="flex items-center gap-4">
                 <div className="text-2xl font-bold text-yellow-400">
                   Código: {gameState.code}
@@ -263,27 +229,12 @@ export const ModeratorView: React.FC = () => {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Button
-                onClick={() => {
-                  const spectatorUrl = `${globalThis.location.origin}/game/${gameId}/spectator`;
-                  navigator.clipboard.writeText(spectatorUrl).then(() => {
-                    alert('¡Link de espectador copiado al portapapeles!');
-                  }).catch(() => {
-                    prompt('Copia este link para compartir la vista de espectador:', spectatorUrl);
-                  });
-                }}
-                variant="outline"
-                size="sm"
-                className="bg-green-600 border-green-500 text-white hover:bg-green-700"
-              >
-                <Eye className="w-4 h-4 mr-2" />
-                Vista Espectador
-              </Button>
               {gameState.status === 'playing' && (
                 <Button
                   onClick={handleEndGame}
                   variant="danger"
                   size="sm"
+                  className="flex items-center justify-center bg-red-600 hover:bg-red-700"
                 >
                   <StopCircle className="w-4 h-4 mr-2" />
                   Finalizar Juego
@@ -369,13 +320,13 @@ export const ModeratorView: React.FC = () => {
                       </div>
                     </div>
                     
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-2 gap-3 mb-4">
                       {players.map((player) => (
                         <Button
                           key={player.id}
                           onClick={() => handleModeratorSelectPlayer(player.id)}
                           disabled={loading}
-                          className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3"
+                          className="flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-3"
                           size="lg"
                         >
                           <User className="w-5 h-5 mr-2" />
@@ -395,7 +346,7 @@ export const ModeratorView: React.FC = () => {
                   </div>
                 )}
                 
-                <div className="bg-green-500/20 border-2 border-green-500 rounded-lg p-4">
+                <div className="bg-green-500/20 border-2 border-green-500 rounded-lg p-4 mt-4">
                   <div className="text-sm font-semibold text-green-300 mb-1">
                     RESPUESTA CORRECTA:
                   </div>
@@ -409,7 +360,7 @@ export const ModeratorView: React.FC = () => {
                 <Button
                   onClick={handleBuzzerGiveUp}
                   disabled={loading}
-                  className="flex-1 bg-gray-600 hover:bg-gray-700"
+                  className="flex-1 flex items-center justify-center bg-gray-600 hover:bg-gray-700"
                   size="lg"
                 >
                   <SkipForward className="w-6 h-6 mr-2" />
@@ -418,7 +369,7 @@ export const ModeratorView: React.FC = () => {
                 <Button
                   onClick={handleSkipQuestion}
                   disabled={loading}
-                  className="bg-yellow-600 hover:bg-yellow-700"
+                  className="flex flex-col items-center bg-yellow-600 hover:bg-yellow-700"
                   size="lg"
                   title="Saltar pregunta sin contar ronda (para preguntas repetidas o problemáticas)"
                 >
@@ -488,25 +439,25 @@ export const ModeratorView: React.FC = () => {
                   <Button
                     onClick={handleCorrectAnswer}
                     disabled={loading}
-                    className="flex-1 bg-green-600 hover:bg-green-700"
+                    className="flex-1 flex items-center justify-center bg-green-600 hover:bg-green-700"
                     size="lg"
                   >
                     <Check className="w-6 h-6 mr-2" />
-                    Respuesta Correcta (+10)
+                    Correcto (+10)
                   </Button>
                   <Button
                     onClick={handleWrongAnswer}
                     disabled={loading}
-                    className="flex-1 bg-red-600 hover:bg-red-700"
+                    className="flex-1 flex items-center justify-center bg-red-600 hover:bg-red-700"
                     size="lg"
                   >
                     <X className="w-6 h-6 mr-2" />
-                    {gameState.settings.turnMode === 'buzzer' ? 'Incorrecta - Siguiente' : 'Respuesta Incorrecta'}
+                    {gameState.settings.turnMode === 'buzzer' ? 'Incorrecta' : 'Respuesta Incorrecta'}
                   </Button>
                   <Button
                     onClick={handleSkipQuestion}
                     disabled={loading}
-                    className="bg-yellow-600 hover:bg-yellow-700"
+                    className="flex flex-col items-center bg-yellow-600 hover:bg-yellow-700"
                     size="lg"
                     title="Saltar pregunta sin contar ronda (para preguntas repetidas o problemáticas)"
                   >
@@ -517,7 +468,7 @@ export const ModeratorView: React.FC = () => {
                     <Button
                       onClick={handleBuzzerGiveUp}
                       disabled={loading}
-                      className="bg-gray-600 hover:bg-gray-700"
+                      className="flex flex-col items-center bg-gray-600 hover:bg-gray-700"
                       size="lg"
                     >
                       <SkipForward className="w-6 h-6 mr-2" />
@@ -532,7 +483,7 @@ export const ModeratorView: React.FC = () => {
             <Card className="bg-gray-800">
               <div className="flex items-center gap-2 mb-4">
                 <Trophy className="w-6 h-6 text-yellow-500" />
-                <h3 className="text-2xl font-bold">Tabla de Posiciones</h3>
+                <h3 className="text-2xl font-bold text-gray-400">Tabla de Posiciones</h3>
               </div>
               <div className="space-y-2">
                 {sortedPlayers.map((player, index) => (
@@ -545,7 +496,7 @@ export const ModeratorView: React.FC = () => {
                     }`}
                   >
                     <div className="flex items-center gap-4">
-                      <div className="text-3xl font-bold text-gray-400">
+                      <div className="text-3xl font-bold text-white">
                         #{index + 1}
                       </div>
                       <div>
@@ -602,9 +553,6 @@ export const ModeratorView: React.FC = () => {
           </>
         )}
       </div>
-
-      {/* Integrate CountdownAnimation into the component */}
-      {/* {countdownActive && <CountdownAnimation onComplete={() => {}} />} */}
     </div>
   );
 };
