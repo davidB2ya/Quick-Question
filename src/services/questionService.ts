@@ -25,15 +25,6 @@ const markQuestionAsUsed = (gameId: string, questionId: string): void => {
   usedQuestions[gameId].add(questionId);
 };
 
-const CATEGORY_THEMES: Record<CategoryType, string> = {
-  deportes: 'deportes, atletas, equipos, competencias, con humor para jóvenes',
-  musica: 'música, artistas, géneros musicales, letras, con humor para jóvenes',
-  historia: 'eventos históricos, personajes, fechas importantes, con humor para jóvenes',
-  ciencia: 'ciencia, inventos, científicos, fenómenos naturales, con humor para jóvenes',
-  entretenimiento: 'películas, series, celebridades, memes, con humor para jóvenes',
-  geografia: 'países, ciudades, monumentos, culturas, con humor para jóvenes',
-};
-
 // Generador principal de preguntas - Intenta IA primero, fallback a banco estático
 export const generateQuestionTry = async (
   category: CategoryType,
