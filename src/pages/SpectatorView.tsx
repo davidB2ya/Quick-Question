@@ -5,6 +5,7 @@ import { GameState } from '../types/game';
 import { subscribeToGame } from '../services/gameService';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
+import { NavigationBar } from '../components/ui/NavigationBar';
 import CountdownAnimation from '@/pages/CountdownAnimation';
 import Confetti from 'react-confetti';
 
@@ -92,6 +93,10 @@ export const SpectatorView: React.FC = () => {
   const sortedPlayers = Object.values(gameState.players).sort((a, b) => b.score - a.score);
   const currentPlayer = gameState.currentPlayerTurn ? gameState.players[gameState.currentPlayerTurn] : null;
 
+  const handleLeaveSpectator = () => {
+    navigate('/');
+  };
+
   const getStatusMessage = () => {
     switch (gameState.status) {
       case 'lobby':
@@ -130,6 +135,14 @@ export const SpectatorView: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-pink-700 p-4">
+      <NavigationBar 
+        showHome
+        showCreateGame
+        showLeaveGame
+        onLeaveGame={handleLeaveSpectator}
+        transparent
+      />
+      
       {gameState.status === 'finished' && (
         <Confetti width={window.innerWidth} height={window.innerHeight} />
       )}

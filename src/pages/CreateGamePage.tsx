@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { Settings, ArrowLeft, Timer, Zap, User, Gamepad2, Brain, Star, Award } from 'lucide-react';
+import { NavigationBar } from '@/components/ui/NavigationBar';
+import { Settings, Timer, Zap, User, Gamepad2, Brain, Star, Award } from 'lucide-react';
 import { createGame } from '@/services/gameService';
 import { useGameStore } from '@/store/gameStore';
 import type { CategoryType, TurnMode, DifficultyLevel, BuzzerMode } from '@/types/game';
@@ -68,16 +69,9 @@ export const CreateGamePage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-400 via-purple-500 to-pink-500 p-4">
+      <NavigationBar showHome showBack transparent />
+      
       <div className="max-w-2xl mx-auto py-8">
-        <Button
-          onClick={() => navigate('/')}
-          variant="outline"
-          size="sm"
-          className="mb-6 bg-white"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Volver
-        </Button>
 
         <Card className="space-y-6">
           <div className="flex items-center gap-3">

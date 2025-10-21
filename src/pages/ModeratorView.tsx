@@ -5,7 +5,8 @@ import { generateQuestionTry } from '@/services/questionService';
 import { useGameStore } from '@/store/gameStore';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Trophy, Users, Play, Check, X, StopCircle, Zap, SkipForward, User, Eye, RefreshCw } from 'lucide-react';
+import { NavigationBar } from '@/components/ui/NavigationBar';
+import { Trophy, Users, Play, Check, X, StopCircle, Zap, SkipForward, User, RefreshCw } from 'lucide-react';
 import { getCategoryEmoji } from '@/lib/utils';
 import './CountdownAnimation.css'; // Add a CSS file for animations
 import Confetti from 'react-confetti';
@@ -211,14 +212,28 @@ export const ModeratorView: React.FC = () => {
   const players = Object.values(gameState.players ?? {});
   const sortedPlayers = [...players].sort((a, b) => b.score - a.score);
 
+  const handleLeaveGame = () => {
+    if (confirm('¿Estás seguro de que quieres salir? Esto no finalizará la partida para los demás jugadores.')) {
+      navigate('/');
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-4">
-      <div className="max-w-6xl mx-auto py-6 space-y-6">
+    <div className="min-h-screen bg-gray-900">
+      <NavigationBar
+        showHome={true}
+        showCreateGame={true}
+        showLeaveGame={true}
+        onLeaveGame={handleLeaveGame}
+        title="Panel del Moderador"
+        transparent={false}
+      />
+      
+      <div className="max-w-6xl mx-auto p-4 py-6 space-y-6">
         {/* Header */}
         <Card className="bg-gray-800 text-white">
           <div className="flex items-center justify-between">
             <div>
-                <h1 className="text-2xl font-bold mb-2 text-gray-400">Panel del Moderador</h1>
               <div className="flex items-center gap-4">
                 <div className="text-2xl font-bold text-yellow-400">
                   Código: {gameState.code}
