@@ -6,7 +6,7 @@ import { NavigationBar } from '@/components/ui/NavigationBar';
 import { Settings, Timer, Zap, User, Gamepad2, Brain, Star, Award } from 'lucide-react';
 import { createGame } from '@/services/gameService';
 import { useGameStore } from '@/store/gameStore';
-import type { CategoryType, TurnMode, DifficultyLevel, BuzzerMode } from '@/types/game';
+import type { CategoryType, TurnMode, DifficultyLevel, BuzzerMode, GameSettings } from '@/types/game';
 
 const CATEGORIES: { value: CategoryType; label: string; emoji: string }[] = [
   { value: 'deportes', label: 'Deportes', emoji: '⚽' },
@@ -48,14 +48,22 @@ export const CreateGamePage: React.FC = () => {
     
     try {
       const moderatorId = `mod_${Date.now()}`;
-      const gameId = await createGame(moderatorId, {
+      
+      // Construir settings sin propiedades undefined
+      const settings: GameSettings = {
         maxPlayers,
         roundsPerGame,
         categories: selectedCategories,
         turnMode,
         difficultyLevel,
-        buzzerMode: turnMode === 'buzzer' ? buzzerMode : undefined,
-      });
+      };
+      
+      // Solo agregar buzzerMode si el modo es 'buzzer'
+      if (turnMode === 'buzzer') {
+        settings.buzzerMode = buzzerMode;
+      }
+      
+      const gameId = await createGame(moderatorId, settings);
 
       setGameId(gameId);
       setPlayerRole('moderator');
