@@ -320,7 +320,7 @@ export const ModeratorView: React.FC = () => {
               </div>
 
               <div className="bg-white/10 rounded-lg p-6">
-                <h3 className="text-3xl font-bold mb-4">
+                <h3 className="text-3xl font-bold mb-4 text-white">
                   {gameState.currentQuestion.question}
                 </h3>
                 
@@ -334,7 +334,7 @@ export const ModeratorView: React.FC = () => {
                         Haz clic en el jugador que levantó la mano o presionó su botón físico
                       </div>
                     </div>
-                    
+                     
                     <div className="grid grid-cols-2 gap-3 mb-4">
                       {players.map((player) => (
                         <Button
@@ -427,7 +427,7 @@ export const ModeratorView: React.FC = () => {
                 </div>
 
                 <div className="bg-white/10 rounded-lg p-6">
-                  <h3 className="text-3xl font-bold mb-4">
+                  <h3 className="text-3xl font-bold mb-4 text-white">
                     {gameState.currentQuestion.question}
                   </h3>
                   <div className="bg-green-500/20 border-2 border-green-500 rounded-lg p-4">
@@ -515,7 +515,7 @@ export const ModeratorView: React.FC = () => {
                         #{index + 1}
                       </div>
                       <div>
-                        <div className="text-xl font-semibold">{player.name}</div>
+                        <div className="text-xl font-semibold text-white">{player.name}</div>
                         {player.id === gameState.currentPlayerTurn && (
                           <div className="text-sm text-green-400">Turno actual</div>
                         )}

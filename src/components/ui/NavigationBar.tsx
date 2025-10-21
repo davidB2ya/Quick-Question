@@ -88,7 +88,7 @@ export const NavigationBar: React.FC<NavigationBarProps> = ({
                                 onClick={handleGoHome}
                                 variant="ghost"
                                 size="sm"
-                                className={transparent ? 'flex items-center justify-center text-white hover:bg-white/20' : ''}
+                                className={transparent ? 'flex items-center justify-center text-white hover:bg-white/20' : 'flex items-center justify-center'}
                                 title="Ir al inicio"
                             >
                                 <Home className="w-4 h-4" />
@@ -101,7 +101,7 @@ export const NavigationBar: React.FC<NavigationBarProps> = ({
                                 onClick={handleCreateGame}
                                 variant="ghost"
                                 size="sm"
-                                className={transparent ? 'flex items-center justify-center text-white hover:bg-white/20' : ''}
+                                className={transparent ? 'flex items-center justify-center text-white hover:bg-white/20' : 'flex items-center justify-center'}
                                 title="Crear nueva partida"
                             >
                                 <Plus className="w-4 h-4" />
