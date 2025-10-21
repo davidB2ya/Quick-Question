@@ -123,6 +123,7 @@ export const updateCurrentQuestion = async (
   await update(ref(database, `games/${gameId}`), {
     currentQuestion: question,
     currentPlayerTurn: playerTurnId,
+    firstBuzzerPress: false, // Nueva pregunta = reset del tracking de buzzer
   });
 };
 
@@ -137,11 +138,32 @@ export const updatePlayerScore = async (
   
   if (snapshot.exists()) {
     const currentScore = snapshot.val().score || 0;
+    // Permitir puntajes negativos, pero el score final nunca será menor a 0
+    const newScore = Math.max(0, currentScore + points);
     await update(playerRef, {
-      score: currentScore + points,
+      score: newScore,
     });
   }
 };
+
+// Calcular puntos según el orden de BUZZER (no de respuestas correctas)
+// En modo buzzer: solo el PRIMERO en presionar el buzzer puede ganar +10
+// En modo automático: el primero de cada ronda gana +10
+export const calculatePointsForCorrectAnswer = (
+  isFirstBuzzerPress: boolean,
+  correctAnswersCount: number
+): number => {
+  // En modo buzzer: solo el primero en presionar puede ganar +10
+  // En modo automático: el primero en responder correctamente gana +10
+  if (isFirstBuzzerPress && correctAnswersCount === 0) {
+    return 10;
+  }
+  // Todos los demás: +8 puntos
+  return 8;
+};
+
+// Puntos por respuesta incorrecta
+export const WRONG_ANSWER_PENALTY = -5;
 
 // Avanzar a la siguiente ronda
 export const nextRound = async (gameId: string): Promise<void> => {
@@ -157,12 +179,16 @@ export const nextRound = async (gameId: string): Promise<void> => {
         status: 'finished',
         currentQuestion: null,
         currentPlayerTurn: null,
+        correctAnswersThisRound: [],
+        firstBuzzerPress: false,
       });
     } else {
       await update(gameRef, {
         round: newRound,
         currentQuestion: null,
         currentPlayerTurn: null,
+        correctAnswersThisRound: [],
+        firstBuzzerPress: false,
       });
     }
   }
@@ -181,6 +207,8 @@ export const activateBuzzer = async (gameId: string): Promise<void> => {
     status: 'waiting-for-buzzer',
     buzzerPressed: null,
     playersWaiting: [],
+    correctAnswersThisRound: [], // Reset de respuestas correctas
+    firstBuzzerPress: false, // Reset: nadie ha presionado aún
   });
 };
 
@@ -198,6 +226,7 @@ export const pressBuzzer = async (gameId: string, playerId: string): Promise<voi
         buzzerPressed: playerId,
         currentPlayerTurn: playerId,
         status: 'playing',
+        firstBuzzerPress: true, // Marcar que ya alguien presionó primero
       });
     }
   }
@@ -213,6 +242,11 @@ export const buzzerWrongAnswer = async (gameId: string): Promise<void> => {
     const currentPlayer = game.buzzerPressed;
     const playersWaiting = game.playersWaiting || [];
     
+    // Penalizar al jugador que respondió incorrectamente
+    if (currentPlayer) {
+      await updatePlayerScore(gameId, currentPlayer, WRONG_ANSWER_PENALTY);
+    }
+    
     // Agregar el jugador actual a la lista de espera (ya intentó)
     if (currentPlayer && !playersWaiting.includes(currentPlayer)) {
       playersWaiting.push(currentPlayer);
@@ -224,11 +258,13 @@ export const buzzerWrongAnswer = async (gameId: string): Promise<void> => {
     
     if (remainingPlayers.length > 0) {
       // Volver a activar el buzzer para los jugadores restantes
+      // IMPORTANTE: Mantener firstBuzzerPress en true (no resetearlo)
       await update(gameRef, {
         status: 'waiting-for-buzzer',
         buzzerPressed: null,
         currentPlayerTurn: null,
         playersWaiting,
+        firstBuzzerPress: true, // ✅ Mantener en true para que el siguiente no gane +10
       });
     } else {
       // Todos fallaron, pasar a la siguiente pregunta
@@ -241,6 +277,8 @@ export const buzzerWrongAnswer = async (gameId: string): Promise<void> => {
           currentPlayerTurn: null,
           buzzerPressed: null,
           playersWaiting: [],
+          correctAnswersThisRound: [],
+          firstBuzzerPress: false,
         });
       } else {
         await update(gameRef, {
@@ -249,6 +287,8 @@ export const buzzerWrongAnswer = async (gameId: string): Promise<void> => {
           currentPlayerTurn: null,
           buzzerPressed: null,
           playersWaiting: [],
+          correctAnswersThisRound: [],
+          firstBuzzerPress: false,
           status: 'playing',
         });
       }
@@ -272,6 +312,8 @@ export const buzzerGiveUp = async (gameId: string): Promise<void> => {
         currentPlayerTurn: null,
         buzzerPressed: null,
         playersWaiting: [],
+        correctAnswersThisRound: [],
+        firstBuzzerPress: false,
       });
     } else {
       await update(gameRef, {
@@ -280,6 +322,8 @@ export const buzzerGiveUp = async (gameId: string): Promise<void> => {
         currentPlayerTurn: null,
         buzzerPressed: null,
         playersWaiting: [],
+        correctAnswersThisRound: [],
+        firstBuzzerPress: false,
         status: 'playing',
       });
     }
@@ -318,8 +362,67 @@ export const skipQuestion = async (gameId: string): Promise<void> => {
       currentPlayerTurn: null,
       buzzerPressed: null,
       playersWaiting: [],
+      correctAnswersThisRound: [],
+      firstBuzzerPress: false,
       // Mantener el mismo round y status
       status: 'playing',
     });
   }
+};
+
+// Registrar respuesta correcta y obtener puntos según el orden
+export const addCorrectAnswer = async (
+  gameId: string,
+  playerId: string
+): Promise<number> => {
+  const gameRef = ref(database, `games/${gameId}`);
+  const snapshot = await get(gameRef);
+  
+  if (snapshot.exists()) {
+    const game = snapshot.val() as GameState;
+    const correctAnswers = game.correctAnswersThisRound || [];
+    
+    // En MODO BUZZER: solo el primero en presionar el buzzer puede ganar +10
+    // En MODO AUTOMÁTICO: cada jugador en su turno puede ganar +10
+    let isFirstBuzzerPress = false;
+    
+    if (game.settings.turnMode === 'buzzer') {
+      // Modo buzzer: verificar si fue el primero en presionar
+      isFirstBuzzerPress = game.firstBuzzerPress !== true;
+      
+      // DEBUG
+      console.log('🔍 DEBUG addCorrectAnswer (BUZZER MODE):');
+      console.log('  - playerId:', playerId);
+      console.log('  - firstBuzzerPress:', game.firstBuzzerPress);
+      console.log('  - isFirstBuzzerPress:', isFirstBuzzerPress);
+      console.log('  - correctAnswers.length:', correctAnswers.length);
+    } else {
+      // Modo automático: cada jugador puede ganar +10 en su turno
+      isFirstBuzzerPress = correctAnswers.length === 0;
+      
+      // DEBUG
+      console.log('🔍 DEBUG addCorrectAnswer (AUTO MODE):');
+      console.log('  - playerId:', playerId);
+      console.log('  - correctAnswers.length:', correctAnswers.length);
+      console.log('  - isFirstBuzzerPress:', isFirstBuzzerPress);
+    }
+    
+    // Calcular puntos según:
+    // - Si fue el primero en presionar buzzer Y el primero en responder correctamente = +10
+    // - Todos los demás casos = +8
+    const points = calculatePointsForCorrectAnswer(isFirstBuzzerPress, correctAnswers.length);
+    
+    console.log('  - PUNTOS CALCULADOS:', points);
+    
+    // Agregar jugador a la lista de respuestas correctas
+    correctAnswers.push(playerId);
+    
+    await update(gameRef, {
+      correctAnswersThisRound: correctAnswers,
+    });
+    
+    return points;
+  }
+  
+  return 8; // Fallback (ya no es el primero)
 };

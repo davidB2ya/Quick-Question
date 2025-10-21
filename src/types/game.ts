@@ -46,6 +46,8 @@ export interface GameState {
   settings: GameSettings;
   buzzerPressed?: string | null; // ID del jugador que presionó el buzzer
   playersWaiting?: string[]; // IDs de jugadores esperando turno
+  correctAnswersThisRound?: string[]; // IDs de jugadores que ya respondieron correctamente en esta ronda (para tracking de 1er, 2do, etc.)
+  firstBuzzerPress?: boolean; // Indica si ya alguien presionó el buzzer primero en esta pregunta (para dar +10 solo al primero)
 }
 
 export interface GameSettings {

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { subscribeToGame, startGame, updateCurrentQuestion, updatePlayerScore, nextRound, endGame, activateBuzzer, activateBuzzerManual, moderatorSelectPlayer, buzzerWrongAnswer, buzzerGiveUp, skipQuestion } from '@/services/gameService';
+import { subscribeToGame, startGame, updateCurrentQuestion, updatePlayerScore, nextRound, endGame, activateBuzzer, activateBuzzerManual, moderatorSelectPlayer, buzzerWrongAnswer, buzzerGiveUp, skipQuestion, addCorrectAnswer, WRONG_ANSWER_PENALTY } from '@/services/gameService';
 import { generateQuestionTry } from '@/services/questionService';
 import { useGameStore } from '@/store/gameStore';
 import { Card } from '@/components/ui/Card';
@@ -99,7 +99,22 @@ export const ModeratorView: React.FC = () => {
 
     setLoading(true);
     try {
-      await updatePlayerScore(gameId, gameState.currentPlayerTurn, 10);
+      // Registrar respuesta correcta y obtener puntos según el orden
+      const points = await addCorrectAnswer(gameId, gameState.currentPlayerTurn);
+      
+      // Actualizar puntaje del jugador
+      await updatePlayerScore(gameId, gameState.currentPlayerTurn, points);
+      
+      // Obtener nombre del jugador para notificación
+      const playerName = gameState.players[gameState.currentPlayerTurn]?.name || 'Jugador';
+      
+      // Mostrar notificación según los puntos obtenidos
+      if (points === 10) {
+        showSuccess(`🎉 ${playerName} respondió primero! +10 puntos`);
+      } else {
+        showSuccess(`✅ ${playerName} correcto! +8 puntos`);
+      }
+      
       await handleNextQuestion();
     } catch (error) {
       console.error('Error updating score:', error);
@@ -114,6 +129,13 @@ export const ModeratorView: React.FC = () => {
     setLoading(true);
     try {
       if (gameState.settings.turnMode === 'buzzer') {
+        // Obtener nombre del jugador para notificación
+        const currentPlayerId = gameState.buzzerPressed || gameState.currentPlayerTurn;
+        const playerName = currentPlayerId ? gameState.players[currentPlayerId]?.name || 'Jugador' : 'Jugador';
+        
+        // Mostrar notificación de penalización
+        showSuccess(`❌ ${playerName} incorrecto. -5 puntos`);
+        
         await buzzerWrongAnswer(gameId);
         // Si todos fallaron, generar nueva pregunta después del delay
         const currentPlayer = gameState.buzzerPressed;
@@ -129,6 +151,12 @@ export const ModeratorView: React.FC = () => {
           }
         }
       } else {
+        // Modo automático: también penalizar con -5
+        if (gameState.currentPlayerTurn) {
+          await updatePlayerScore(gameId, gameState.currentPlayerTurn, WRONG_ANSWER_PENALTY);
+          const playerName = gameState.players[gameState.currentPlayerTurn]?.name || 'Jugador';
+          showSuccess(`❌ ${playerName} incorrecto. -5 puntos`);
+        }
         await handleNextQuestion();
       }
     } catch (error) {
@@ -287,7 +315,7 @@ export const ModeratorView: React.FC = () => {
               <div className="space-y-2">
                 {players.map((player) => (
                   <div key={player.id} className="bg-gray-700 rounded-lg p-3">
-                    <span className="font-semibold">{player.name}</span>
+                    <span className="font-semibold text-white">{player.name}</span>
                   </div>
                 ))}
               </div>
@@ -295,7 +323,7 @@ export const ModeratorView: React.FC = () => {
                 onClick={handleStartGame}
                 disabled={loading || players.length < 2}
                 size="lg"
-                className="w-full"
+                className="flex items-center justify-center w-full"
               >
                 <Play className="w-5 h-5 mr-2" />
                 {loading ? 'Iniciando...' : 'Iniciar Juego'}
