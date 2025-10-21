@@ -36,3 +36,11 @@ export function getCategoryEmoji(category: string): string {
   };
   return emojis[category] || '❓';
 }
+
+export function formatPlayerCount(currentPlayers: number, maxPlayers: number | string): string {
+  const max = Number(maxPlayers);
+  if (max === -1) {
+    return `${currentPlayers} jugador${currentPlayers === 1 ? '' : 'es'} conectado${currentPlayers === 1 ? '' : 's'} (sin límite)`;
+  }
+  return `${currentPlayers} / ${max} jugador${max === 1 ? '' : 'es'}`;
+}

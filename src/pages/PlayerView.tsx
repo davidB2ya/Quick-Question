@@ -124,7 +124,9 @@ export const PlayerView: React.FC = () => {
               Esperando Jugadores...
             </h3>
             <p className="text-gray-600">
-              {players.length} / {gameState.settings.maxPlayers} jugadores
+              {players.length} {gameState.settings.maxPlayers === -1 
+                ? 'jugadores conectados (sin límite)' 
+                : `/ ${gameState.settings.maxPlayers} jugadores`}
             </p>
             <p className="text-sm text-gray-500 mt-2">
               El moderador iniciará el juego pronto

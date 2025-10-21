@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { NavigationBar } from '@/components/ui/NavigationBar';
 import { showLoading, updateToast } from '@/components/ui/Toast';
-import { Settings, Timer, Zap, User, Gamepad2, Brain, Star, Award } from 'lucide-react';
+import { Settings, Timer, Zap, User, Users, Gamepad2, Brain, Star, Award } from 'lucide-react';
 import { createGame } from '@/services/gameService';
 import { useGameStore } from '@/store/gameStore';
 import type { CategoryType, TurnMode, DifficultyLevel, BuzzerMode, GameSettings } from '@/types/game';
@@ -22,7 +22,7 @@ export const CreateGamePage: React.FC = () => {
   const navigate = useNavigate();
   const { setGameId, setPlayerRole } = useGameStore();
   
-  const [maxPlayers, setMaxPlayers] = useState(4);
+  const [maxPlayers, setMaxPlayers] = useState<number>(4);
   const [roundsPerGame, setRoundsPerGame] = useState(10);
   const [selectedCategories, setSelectedCategories] = useState<CategoryType[]>([
     'deportes',
@@ -97,23 +97,39 @@ export const CreateGamePage: React.FC = () => {
           {/* Max Players */}
           <div>
             <label className="block text-lg font-semibold text-gray-700 mb-3">
+              <Users className="w-5 h-5 inline mr-2" />
               Número de Jugadores
             </label>
-            <div className="flex gap-2">
-              {[2, 3, 4].map((num) => (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              {[2, 4, 8].map((num) => (
                 <button
                   key={num}
                   onClick={() => setMaxPlayers(num)}
-                  className={`flex-1 py-3 px-4 rounded-lg font-semibold transition-all ${
+                  className={`py-3 px-4 rounded-lg font-semibold transition-all ${
                     maxPlayers === num
-                      ? 'bg-primary-600 text-white shadow-lg'
+                      ? 'bg-primary-600 text-white shadow-lg transform scale-105'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
-                  {num} jugadores
+                  {num}
                 </button>
               ))}
+              <button
+                onClick={() => setMaxPlayers(-1)}
+                className={`py-3 px-4 rounded-lg font-semibold transition-all ${
+                  maxPlayers === -1
+                    ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg transform scale-105'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                ∞ Sin límite
+              </button>
             </div>
+            {maxPlayers === -1 && (
+              <p className="text-sm text-purple-600 mt-2 font-medium">
+                ✨ Modo ilimitado: Pueden unirse todos los jugadores que deseen
+              </p>
+            )}
           </div>
 
           {/* Rounds */}

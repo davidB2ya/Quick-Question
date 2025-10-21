@@ -49,7 +49,7 @@ export interface GameState {
 }
 
 export interface GameSettings {
-  maxPlayers: number;
+  maxPlayers: number | string;
   roundsPerGame: number;
   categories: CategoryType[];
   turnMode: TurnMode;

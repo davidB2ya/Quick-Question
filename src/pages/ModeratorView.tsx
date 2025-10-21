@@ -280,7 +280,9 @@ export const ModeratorView: React.FC = () => {
               <Users className="w-16 h-16 mx-auto text-blue-400" />
               <h2 className="text-2xl font-bold">Esperando Jugadores</h2>
               <p className="text-gray-400">
-                {players.length} / {gameState.settings.maxPlayers} jugadores conectados
+                {players.length} {gameState.settings.maxPlayers === -1 
+                  ? 'jugadores conectados (sin límite)' 
+                  : `/ ${gameState.settings.maxPlayers} jugadores conectados`}
               </p>
               <div className="space-y-2">
                 {players.map((player) => (

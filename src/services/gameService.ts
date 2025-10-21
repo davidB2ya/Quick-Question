@@ -54,7 +54,9 @@ export const joinGame = async (
   const [gameId, game] = gameEntry as [string, GameState];
   const playerCount = Object.keys(game.players || {}).length;
 
-  if (playerCount >= game.settings.maxPlayers) {
+  // Verificar límite de jugadores (solo si no es ilimitado, -1 representa sin límite)
+  const maxPlayers = Number(game.settings.maxPlayers);
+  if (maxPlayers !== -1 && playerCount >= maxPlayers) {
     throw new Error('La partida está llena');
   }
 
