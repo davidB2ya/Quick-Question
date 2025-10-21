@@ -5,6 +5,7 @@ import { useGameStore } from '@/store/gameStore';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { NavigationBar } from '@/components/ui/NavigationBar';
+import { showSuccess, confirmAsync } from '@/components/ui/Toast';
 import { Trophy, Users, Target, Zap } from 'lucide-react';
 import { getCategoryEmoji } from '@/lib/utils';
 import CountdownAnimation from '@/pages/CountdownAnimation';
@@ -73,9 +74,19 @@ export const PlayerView: React.FC = () => {
   const currentPlayer = playerId ? gameState.players[playerId] : null;
   const isMyTurn = gameState.currentPlayerTurn === playerId;
 
-  const handleLeaveGame = () => {
-    if (confirm('¿Estás seguro de que quieres salir del juego?')) {
-      navigate('/');
+  const handleLeaveGame = async () => {
+    const confirmed = await confirmAsync(
+      '¿Deseas abandonar la partida?',
+      {
+        title: '¿Salir del juego?',
+        confirmText: 'Sí, salir',
+        cancelText: 'Cancelar',
+      }
+    );
+
+    if (confirmed) {
+      showSuccess('Has salido del juego');
+      setTimeout(() => navigate('/'), 500);
     }
   };
 

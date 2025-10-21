@@ -5,10 +5,12 @@ import { PlayerView } from '@/pages/PlayerView';
 import { ModeratorView } from '@/pages/ModeratorView';
 import { SpectatorView } from '@/pages/SpectatorView';
 import { NotFoundPage } from '@/pages/NotFoundPage';
+import { ToastContainer } from '@/components/ui/Toast';
 
 function App() {
   return (
     <BrowserRouter>
+      <ToastContainer />
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/create" element={<CreateGamePage />} />

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
+import { showError, showSuccess, showWarning } from '@/components/ui/Toast';
 import { Sparkles, Users, Gamepad2, Eye } from 'lucide-react';
 import { joinGame, verifyGameExists } from '@/services/gameService';
 import { useGameStore } from '@/store/gameStore';
@@ -12,25 +13,23 @@ export const HomePage: React.FC = () => {
   const [roomCode, setRoomCode] = useState('');
   const [playerName, setPlayerName] = useState('');
   const [spectatorCode, setSpectatorCode] = useState('');
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const { setGameId, setPlayerId, setPlayerRole } = useGameStore();
 
   const handleJoinGame = async () => {
     if (!roomCode.trim() || !playerName.trim()) {
-      setError('Por favor completa todos los campos');
+      showWarning('Por favor completa todos los campos');
       return;
     }
 
     setLoading(true);
-    setError('');
 
     try {
       const result = await joinGame(roomCode.toUpperCase(), playerName);
       
       if (!result) {
-        setError('No se encontró la partida. Verifica el código.');
+        showError('No se encontró la partida. Verifica el código.');
         setLoading(false);
         return;
       }
@@ -38,9 +37,14 @@ export const HomePage: React.FC = () => {
       setGameId(result.gameId);
       setPlayerId(result.playerId);
       setPlayerRole('player');
-      navigate(`/game/${result.gameId}/player`);
+      
+      showSuccess('¡Te has unido a la partida!');
+      
+      setTimeout(() => {
+        navigate(`/game/${result.gameId}/player`);
+      }, 500);
     } catch (err: any) {
-      setError(err.message || 'Error al unirse a la partida');
+      showError(err.message || 'Error al unirse a la partida');
       setLoading(false);
     }
   };
@@ -51,27 +55,30 @@ export const HomePage: React.FC = () => {
 
   const handleJoinAsSpectator = async () => {
     if (!spectatorCode.trim()) {
-      setError('Por favor ingresa el código de la partida');
+      showWarning('Por favor ingresa el código de la partida');
       return;
     }
 
     setLoading(true);
-    setError('');
 
     try {
       // Solo verificamos que existe el juego, sin unirse como jugador
       const result = await verifyGameExists(spectatorCode.toUpperCase());
       
       if (!result) {
-        setError('No se encontró la partida. Verifica el código.');
+        showError('No se encontró la partida. Verifica el código.');
         setLoading(false);
         return;
       }
 
+      showSuccess('Accediendo como espectador...');
+      
       // Ir directamente a la vista de espectador sin contar como jugador
-      navigate(`/game/${result.gameId}/spectator`);
+      setTimeout(() => {
+        navigate(`/game/${result.gameId}/spectator`);
+      }, 500);
     } catch (err: any) {
-      setError(err.message || 'Error al acceder a la partida');
+      showError(err.message || 'Error al acceder a la partida');
       setLoading(false);
     }
   };
@@ -116,12 +123,6 @@ export const HomePage: React.FC = () => {
             onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
             maxLength={6}
           />
-
-          {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-              {error}
-            </div>
-          )}
 
           <Button
             onClick={handleJoinGame}

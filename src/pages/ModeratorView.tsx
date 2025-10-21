@@ -6,6 +6,7 @@ import { useGameStore } from '@/store/gameStore';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { NavigationBar } from '@/components/ui/NavigationBar';
+import { showSuccess, showLoading, updateToast, confirmAsync } from '@/components/ui/Toast';
 import { Trophy, Users, Play, Check, X, StopCircle, Zap, SkipForward, User, RefreshCw } from 'lucide-react';
 import { getCategoryEmoji } from '@/lib/utils';
 import './CountdownAnimation.css'; // Add a CSS file for animations
@@ -47,12 +48,15 @@ export const ModeratorView: React.FC = () => {
     if (!gameId || !gameState) return;
     
     setLoading(true);
+    const toastId = showLoading('Iniciando partida...');
+    
     try {
       await startGame(gameId);
       await generateNewQuestion();
+      updateToast(toastId, 'success', '¡Partida iniciada!');
     } catch (error) {
       console.error('Error starting game:', error);
-      alert('Error al iniciar el juego');
+      updateToast(toastId, 'error', 'Error al iniciar el juego');
     } finally {
       setLoading(false);
     }
@@ -212,9 +216,19 @@ export const ModeratorView: React.FC = () => {
   const players = Object.values(gameState.players ?? {});
   const sortedPlayers = [...players].sort((a, b) => b.score - a.score);
 
-  const handleLeaveGame = () => {
-    if (confirm('¿Estás seguro de que quieres salir? Esto no finalizará la partida para los demás jugadores.')) {
-      navigate('/');
+  const handleLeaveGame = async () => {
+    const confirmed = await confirmAsync(
+      'Esto no finalizará la partida para los demás jugadores.',
+      {
+        title: '¿Salir de la partida?',
+        confirmText: 'Sí, salir',
+        cancelText: 'Cancelar',
+      }
+    );
+
+    if (confirmed) {
+      showSuccess('Has salido de la partida');
+      setTimeout(() => navigate('/'), 500);
     }
   };
 

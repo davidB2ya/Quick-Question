@@ -6,6 +6,7 @@ import { subscribeToGame } from '../services/gameService';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { NavigationBar } from '../components/ui/NavigationBar';
+import { showSuccess, showError, confirmAsync } from '@/components/ui/Toast';
 import CountdownAnimation from '@/pages/CountdownAnimation';
 import Confetti from 'react-confetti';
 
@@ -14,13 +15,12 @@ export const SpectatorView: React.FC = () => {
   const navigate = useNavigate();
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
   const [countdownActive, setCountdownActive] = useState(false);
 
   useEffect(() => {
     if (!gameId) {
-      setError('ID de juego no válido');
+      showError('ID de juego no válido');
       setLoading(false);
       return;
     }
@@ -28,9 +28,8 @@ export const SpectatorView: React.FC = () => {
     const unsubscribe = subscribeToGame(gameId, (updatedGameState: GameState | null) => {
       if (updatedGameState) {
         setGameState(updatedGameState);
-        setError(null);
       } else {
-        setError('Juego no encontrado');
+        showError('Juego no encontrado');
       }
       setLoading(false);
     });
@@ -76,12 +75,12 @@ export const SpectatorView: React.FC = () => {
     );
   }
 
-  if (error || !gameState) {
+  if (!gameState) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-pink-700 flex items-center justify-center">
         <Card className="max-w-md w-full mx-4 p-6 text-center">
           <h2 className="text-2xl font-bold text-red-600 mb-4">Error</h2>
-          <p className="text-gray-600 mb-6">{error}</p>
+          <p className="text-gray-600 mb-6">No se pudo cargar la partida</p>
           <Button onClick={() => navigate('/')} className="w-full">
             Volver al inicio
           </Button>
@@ -93,8 +92,20 @@ export const SpectatorView: React.FC = () => {
   const sortedPlayers = Object.values(gameState.players).sort((a, b) => b.score - a.score);
   const currentPlayer = gameState.currentPlayerTurn ? gameState.players[gameState.currentPlayerTurn] : null;
 
-  const handleLeaveSpectator = () => {
-    navigate('/');
+  const handleLeaveSpectator = async () => {
+    const confirmed = await confirmAsync(
+      '¿Deseas salir de la vista de espectador?',
+      {
+        title: '¿Salir?',
+        confirmText: 'Sí, salir',
+        cancelText: 'Quedarme',
+      }
+    );
+
+    if (confirmed) {
+      showSuccess('Has salido de la vista de espectador');
+      setTimeout(() => navigate('/'), 500);
+    }
   };
 
   const getStatusMessage = () => {

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { NavigationBar } from '@/components/ui/NavigationBar';
+import { showLoading, updateToast } from '@/components/ui/Toast';
 import { Settings, Timer, Zap, User, Gamepad2, Brain, Star, Award } from 'lucide-react';
 import { createGame } from '@/services/gameService';
 import { useGameStore } from '@/store/gameStore';
@@ -45,6 +46,7 @@ export const CreateGamePage: React.FC = () => {
 
   const handleCreateGame = async () => {
     setLoading(true);
+    const toastId = showLoading('Creando partida...');
     
     try {
       const moderatorId = `mod_${Date.now()}`;
@@ -67,10 +69,15 @@ export const CreateGamePage: React.FC = () => {
 
       setGameId(gameId);
       setPlayerRole('moderator');
-      navigate(`/game/${gameId}/moderator`);
+      
+      updateToast(toastId, 'success', '¡Partida creada exitosamente!');
+      
+      setTimeout(() => {
+        navigate(`/game/${gameId}/moderator`);
+      }, 500);
     } catch (error) {
       console.error('Error creating game:', error);
-      alert('Error al crear la partida');
+      updateToast(toastId, 'error', 'Error al crear la partida. Intenta nuevamente.');
       setLoading(false);
     }
   };
